@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+// We use a standard img tag here for better compatibility in the preview
 
 interface AboutProps {
   theme: 'sun' | 'moon';
@@ -13,9 +14,13 @@ export default function About({ theme }: AboutProps) {
         
         {/* Image / Portrait Column */}
         <div className={`aspect-[3/4] rounded-full overflow-hidden border-4 border-opacity-20 border-current relative ${theme === 'sun' ? 'shadow-2xl shadow-amber-500/20' : 'shadow-2xl shadow-indigo-500/20'}`}>
-           {/* Placeholder for portrait */}
-           <div className={`w-full h-full flex items-center justify-center ${theme === 'sun' ? 'bg-amber-200' : 'bg-slate-800'}`}>
-              <span className="opacity-50 font-serif text-2xl italic">Portrait</span>
+           <div className="relative w-full h-full">
+             {/* Standard img tag works reliably in all preview environments */}
+             <img 
+               src="/IMG_7200.jpg" 
+               alt="Portrait of the Astrologer"
+               className="w-full h-full object-cover"
+             />
            </div>
         </div>
         

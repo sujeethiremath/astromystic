@@ -23,7 +23,6 @@ const useTheme = () => {
 };
 */
 // =========================================================================
-
 interface NavbarProps {
   user: User | null;
   authLoading: boolean;
@@ -44,12 +43,12 @@ export default function Navbar({ user, authLoading, onOpenAuth, onSignOut, curre
   };
 
   return (
-    <nav className={`fixed top-0 w-full z-50 border-b border-opacity-10 border-current ${currentStyles.navBg}`}>
+    <nav className={`fixed top-0 w-full z-50 border-b border-opacity-10 border-current transition-all duration-300 ${currentStyles.navBg}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* LOGO */}
           <div 
-            className="flex items-center gap-2 cursor-pointer"
+            className="flex items-center gap-2 cursor-pointer z-50"
             onClick={() => handleNavClick('home')}
           >
             {theme === 'sun' ? <Sun className="w-6 h-6 text-amber-500" /> : <Moon className="w-6 h-6 text-indigo-400" />}
@@ -101,7 +100,7 @@ export default function Navbar({ user, authLoading, onOpenAuth, onSignOut, curre
           </div>
 
           {/* MOBILE MENU TOGGLE */}
-          <div className="md:hidden flex items-center gap-4">
+          <div className="md:hidden flex items-center gap-4 z-50">
             <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -109,36 +108,51 @@ export default function Navbar({ user, authLoading, onOpenAuth, onSignOut, curre
         </div>
       </div>
 
-      {/* MOBILE MENU DROPDOWN */}
+      {/* MOBILE MENU OVERLAY */}
       {isMenuOpen && (
-        <div className="md:hidden absolute w-full border-b border-opacity-10 border-current bg-inherit">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+        <div className={`md:hidden fixed inset-0 top-16 ${currentStyles.navBg} backdrop-blur-xl border-t border-opacity-10 border-current h-[calc(100vh-4rem)] flex flex-col p-6 space-y-6 animate-in slide-in-from-right-10 fade-in duration-200`}>
+          
+          <div className="space-y-4">
             {['Services', 'About', 'Contact'].map((item) => (
               <button
                 key={item}
                 onClick={() => handleNavClick(item.toLowerCase())}
-                className="block w-full text-left px-3 py-2 text-base font-medium hover:bg-opacity-10 hover:bg-current rounded-md"
+                className="block w-full text-left text-2xl font-serif font-bold py-2 border-b border-current border-opacity-10"
               >
                 {item}
               </button>
             ))}
-            <div className="pt-4 border-t border-current border-opacity-10 mt-2">
-               {user ? (
-                 <>
-                  <div className="px-3 py-2 text-sm opacity-60">Signed in as {user.email}</div>
-                  <button onClick={() => router.push('/dashboard')} className="flex items-center gap-2 w-full text-left px-3 py-2 text-base font-medium">
-                     <LayoutDashboard className="w-4 h-4" /> Dashboard
-                  </button>
-                  <button onClick={onSignOut} className="flex items-center gap-2 w-full text-left px-3 py-2 text-base font-medium">
-                      <LogOut className="w-4 h-4" /> Sign Out
-                  </button>
-                 </>
-               ) : (
-                 <button onClick={() => { onOpenAuth(); setIsMenuOpen(false); }} className="flex items-center gap-2 w-full text-left px-3 py-2 text-base font-medium text-amber-500">
-                    <UserIcon className="w-4 h-4" /> Sign In
-                 </button>
-               )}
-            </div>
+          </div>
+
+          <div className="pt-4 space-y-4">
+             <div className="flex items-center justify-between bg-current bg-opacity-5 p-4 rounded-xl">
+                <span className="text-sm font-bold tracking-wider opacity-80">THEME</span>
+                <button 
+                  onClick={toggleTheme}
+                  className={`p-2 rounded-full ${theme === 'sun' ? 'bg-amber-100 text-amber-600' : 'bg-slate-800 text-indigo-300'}`}
+                >
+                  {theme === 'sun' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                </button>
+             </div>
+
+             {user ? (
+               <div className="bg-current bg-opacity-5 p-4 rounded-xl space-y-4">
+                <div className="text-sm opacity-60">Signed in as <br/><span className="font-bold text-current opacity-100">{user.email}</span></div>
+                <button onClick={() => router.push('/dashboard')} className="flex items-center gap-3 w-full py-3 font-bold border-t border-current border-opacity-10">
+                   <LayoutDashboard className="w-5 h-5" /> Go to Dashboard
+                </button>
+                <button onClick={onSignOut} className="flex items-center gap-3 w-full py-3 text-red-400 font-bold">
+                    <LogOut className="w-5 h-5" /> Sign Out
+                </button>
+               </div>
+             ) : (
+               <button 
+                onClick={() => { onOpenAuth(); setIsMenuOpen(false); }} 
+                className={`w-full py-4 rounded-xl text-lg font-bold ${theme === 'sun' ? 'bg-amber-600 text-white' : 'bg-indigo-600 text-white'}`}
+               >
+                  Sign In / Register
+               </button>
+             )}
           </div>
         </div>
       )}

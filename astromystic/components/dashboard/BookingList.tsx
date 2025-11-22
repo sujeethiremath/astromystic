@@ -15,7 +15,8 @@ export default function BookingList({ currentStyles }: BookingListProps) {
   ];
 
   return (
-    <div className="grid md:grid-cols-3 gap-6">
+    // MOBILE OPTIMIZATION: grid-cols-1 ensures cards stack on small screens
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {ITEMS.map((item, idx) => (
         <div key={idx} className={`p-6 rounded-xl border flex flex-col ${currentStyles.panelBg} ${currentStyles.border}`}>
           <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${currentStyles.accent}`}>

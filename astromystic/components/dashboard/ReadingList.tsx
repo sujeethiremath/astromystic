@@ -42,7 +42,8 @@ export default function ReadingsList({ currentStyles, theme, onBrowse }: Reading
   }
 
   return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    // MOBILE OPTIMIZATION: grid-cols-1 for mobile, md:grid-cols-2 for tablet, lg:grid-cols-3 for desktop
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {MOCK_READINGS.map((reading) => (
         <div key={reading.id} className={`group rounded-xl overflow-hidden border transition-all hover:shadow-xl ${currentStyles.panelBg} ${currentStyles.border}`}>
           {/* Thumbnail Area */}
