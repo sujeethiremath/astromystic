@@ -135,7 +135,6 @@ export default function Navbar({
                   {theme === 'sun' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
                 </button>
              </div>
-
              {user ? (
                <div className="bg-current bg-opacity-5 p-4 rounded-xl space-y-4">
                 <div className="text-sm opacity-60">Signed in as <br/><span className="font-bold text-current opacity-100">{user.email}</span></div>
