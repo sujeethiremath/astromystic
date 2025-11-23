@@ -1,7 +1,27 @@
+"use client";
+
 import React, { useState } from 'react';
 import { X, Mail, Lock, ArrowLeft, User as UserIcon } from 'lucide-react';
+import { User as FirebaseUser } from 'firebase/auth';
 
-// Import necessary Firebase functions directly
+// =========================================================
+// 1. REAL IMPORTS (Uncomment these in your local Next.js project)
+// =========================================================
+/*
+import { auth, googleProvider } from '../lib/firebase';
+import { 
+  signInWithPopup, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signOut
+} from 'firebase/auth';
+*/
+
+// =========================================================
+// 2. PREVIEW MOCKS (Delete these in your local Next.js project)
+// =========================================================
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { 
   getAuth, 
@@ -11,11 +31,9 @@ import {
   signInWithEmailAndPassword,
   sendEmailVerification,
   sendPasswordResetEmail,
-  signOut,
-  User as FirebaseUser
+  signOut
 } from 'firebase/auth';
 
-// --- CONFIGURATION FOR PREVIEW & LOCAL ---
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -28,7 +46,7 @@ const firebaseConfig = {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
-// -----------------------------
+// =========================================================
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -41,7 +59,7 @@ type AuthMode = 'login' | 'signup' | 'forgot';
 export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
   const [mode, setMode] = useState<AuthMode>('login');
   
-  // NEW: Name State
+  // Name State (For Signup)
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   
@@ -71,7 +89,7 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
     setMode(newMode); setError(''); setSuccessMsg('');
   };
 
-  // UPDATED: Pass names to backend
+  // Sync user to database (Names + Email)
   const syncUserWithBackend = async (user: FirebaseUser) => {
     try {
       await fetch('/api/users/sync', {
@@ -80,7 +98,6 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
-          // Send names if available (Google sign-in might split displayName)
           firstName: firstName || user.displayName?.split(' ')[0] || '',
           lastName: lastName || user.displayName?.split(' ').slice(1).join(' ') || '',
           photoURL: user.photoURL,
@@ -126,14 +143,14 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
         await syncUserWithBackend(result.user);
         onClose();
       } else {
-        // Signup
+        // Signup Logic
         if (!firstName || !lastName) {
           throw new Error("Please enter your first and last name.");
         }
         const result = await createUserWithEmailAndPassword(auth, email, password);
         await sendEmailVerification(result.user);
         
-        // We sync names immediately on creation so they exist in DB even before verification login
+        // Sync immediately so names are saved
         await syncUserWithBackend(result.user);
         
         setMode('login');
@@ -147,19 +164,23 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className={`relative w-full max-w-md p-8 rounded-2xl shadow-2xl ${current.bg} ${current.text} border ${current.border}`}>
+      {/* UPDATED: Added max-h-[90vh] and overflow-y-auto for mobile scrolling */}
+      <div className={`relative w-full max-w-md p-8 rounded-2xl shadow-2xl ${current.bg} ${current.text} border ${current.border} max-h-[90vh] overflow-y-auto`}>
         <button onClick={onClose} className="absolute top-4 right-4 opacity-50 hover:opacity-100"><X className="w-6 h-6" /></button>
         
         <h2 className="text-2xl font-serif font-bold text-center mb-2">
           {mode === 'login' ? 'Welcome Back' : mode === 'signup' ? 'Join the Cosmos' : 'Reset Password'}
         </h2>
+        <p className="text-center opacity-70 mb-6 text-sm">
+          {mode === 'login' ? 'Sign in to access your readings' : mode === 'signup' ? 'Create an account to book your journey' : 'Recover your account access'}
+        </p>
 
         {successMsg && <div className="mb-4 p-3 rounded bg-green-500/20 text-green-600 text-sm text-center">{successMsg}</div>}
         {error && <div className="mb-4 p-3 rounded bg-red-500/20 text-red-600 text-sm text-center">{error}</div>}
 
-        <form onSubmit={mode === 'forgot' ? handleResetPassword : handleEmailAuth} className="space-y-4 mt-6">
+        <form onSubmit={mode === 'forgot' ? handleResetPassword : handleEmailAuth} className="space-y-4">
           
-          {/* NEW: Name Fields (Only for Signup) */}
+          {/* Name Fields (Only for Signup) */}
           {mode === 'signup' && (
             <div className="grid grid-cols-2 gap-4">
               <div className="relative">
@@ -196,6 +217,7 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
           <>
             <div className="my-6 flex items-center gap-4 opacity-50"><div className="h-px flex-1 bg-current" /><span className="text-xs">OR</span><div className="h-px flex-1 bg-current" /></div>
             <button onClick={handleGoogleSignIn} className="w-full py-3 rounded-lg font-bold border border-current border-opacity-20 hover:bg-current hover:bg-opacity-5 flex items-center justify-center gap-3">
+               {/* Google Logo */}
                <svg className="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.26-.19-.58z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
                <span>Continue with Google</span>
             </button>

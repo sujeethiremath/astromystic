@@ -9,27 +9,23 @@ import {
 import { User } from 'firebase/auth';
 
 // =========================================================
-// 1. REAL IMPORTS (UNCOMMENT THESE IN YOUR LOCAL PROJECT)
+// 1. REAL IMPORTS
 // =========================================================
-
 import { useRouter } from 'next/navigation';
 import { useTheme } from '../../context/ThemeContext';
-import { auth } from '../../lib/firebase';
+import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { collection, query, orderBy, onSnapshot, addDoc, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import StarField from '../../components/StarField';
 import DashboardNavbar from '../../components/dashboard/DashboardNavbar';
-import ReadingsList from '../../components/dashboard/ReadingList';
+// FIXED: Plural 'ReadingsList' to match filename
+import ReadingsList from '../../components/dashboard/ReadingList'; 
 import BookingList from '../../components/dashboard/BookingList';
-
 
 export default function Dashboard() {
   const router = useRouter();
-  
-  // Global Theme State
   const { theme } = useTheme();
   
-  // Local State
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'readings' | 'book'>('readings');
@@ -42,9 +38,8 @@ export default function Dashboard() {
       } else {
         // Check Admin role to redirect if needed
         try {
-          const userDocRef = doc(db, 'users', currentUser.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          if (userDocSnap.exists() && userDocSnap.data().role === 'admin') {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists() && userDoc.data().role === 'admin') {
             router.push('/admin');
             return;
           }
@@ -87,7 +82,6 @@ export default function Dashboard() {
 
   const current = styles[theme];
 
-  // Loading State
   if (loading) {
     return (
       <div className={`min-h-screen flex items-center justify-center ${current.bg} ${current.text}`}>
@@ -119,16 +113,17 @@ export default function Dashboard() {
         </div>
 
         {/* Tabs / Actions */}
-        <div className="flex gap-4 mb-8 border-b border-current border-opacity-10 pb-1">
+        {/* ADDED: overflow-x-auto for safe mobile scrolling */}
+        <div className="flex gap-6 mb-8 border-b border-current border-opacity-10 pb-1 overflow-x-auto">
           <button 
             onClick={() => setActiveTab('readings')}
-            className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 ${activeTab === 'readings' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
+            className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 whitespace-nowrap ${activeTab === 'readings' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
           >
             MY LIBRARY
           </button>
           <button 
             onClick={() => setActiveTab('book')}
-            className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 ${activeTab === 'book' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
+            className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 whitespace-nowrap ${activeTab === 'book' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
           >
             BOOK NEW
           </button>

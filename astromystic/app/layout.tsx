@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
   description: "Certified evolutionary astrology readings. Discover your natal chart, solar return, and synastry insights with a professional guide.",
   keywords: ["Astrology", "Natal Chart", "Horoscope", "Zodiac", "Spirituality", "Readings"],
-  authors: [{ name: "Your Name" }],
+  authors: [{ name: "Gulnara Ilyasova" }],
   creator: "Practical Spirituality",
   
   // Open Graph (Facebook, LinkedIn, iMessage, WhatsApp)

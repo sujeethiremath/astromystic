@@ -3,21 +3,23 @@
 import React, { useState } from 'react';
 import { Sun, Moon, Menu, X, LayoutDashboard, User as UserIcon, LogOut } from 'lucide-react';
 import { User } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
 
-// NOTE: We removed useTheme from here. 
-// We now receive theme data from the parent to ensure sync.
+// =========================================================
+// 1. REAL IMPORTS (Uncomment these in your local Next.js project)
+// =========================================================
+import { useRouter } from 'next/navigation';
+import { useTheme } from '../context/ThemeContext';
+
 
 interface NavbarProps {
   user: User | null;
   authLoading: boolean;
   onOpenAuth: () => void;
   onSignOut: () => void;
-  currentStyles: any;
+  currentStyles: any; 
   dashboardPath: string;
-  // NEW PROPS
-  theme: 'sun' | 'moon';
-  toggleTheme: () => void;
+  theme: 'sun' | 'moon'; // Received from parent for strict control
+  toggleTheme: () => void; // Received from parent
 }
 
 export default function Navbar({ 
@@ -27,8 +29,8 @@ export default function Navbar({
   onSignOut, 
   currentStyles, 
   dashboardPath,
-  theme,         // Received from parent
-  toggleTheme    // Received from parent
+  theme, 
+  toggleTheme 
 }: NavbarProps) {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -43,13 +45,15 @@ export default function Navbar({
     <nav className={`fixed top-0 w-full z-50 border-b border-opacity-10 border-current transition-all duration-300 ${currentStyles.navBg}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          {/* LOGO */}
+          {/* LOGO - UPDATED BRANDING */}
           <div 
             className="flex items-center gap-2 cursor-pointer z-50"
             onClick={() => handleNavClick('home')}
           >
             {theme === 'sun' ? <Sun className="w-6 h-6 text-amber-500" /> : <Moon className="w-6 h-6 text-indigo-400" />}
-            <span className="font-serif text-xl tracking-wider font-bold">ASTRO<span className="font-light opacity-80">MYSTIC</span></span>
+            <span className="font-serif text-lg sm:text-xl tracking-wider font-bold">
+              PRACTICAL<span className="font-light opacity-80">SPIRITUALITY</span>
+            </span>
           </div>
 
           {/* DESKTOP NAV */}
