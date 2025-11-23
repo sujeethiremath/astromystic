@@ -52,7 +52,7 @@ export default function Navbar({ user, authLoading, onOpenAuth, onSignOut, curre
             onClick={() => handleNavClick('home')}
           >
             {theme === 'sun' ? <Sun className="w-6 h-6 text-amber-500" /> : <Moon className="w-6 h-6 text-indigo-400" />}
-            <span className="font-serif text-xl tracking-wider font-bold">ASTRO<span className="font-light opacity-80">MYSTIC</span></span>
+            <span className="font-serif text-xl tracking-wider font-bold">Astromystic<span className="font-light opacity-80"> Ilyasova</span></span>
           </div>
 
           {/* DESKTOP NAV */}
