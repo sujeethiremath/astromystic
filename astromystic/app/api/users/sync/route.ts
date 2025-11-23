@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-// Use the @ alias for a safer import path
 import { adminDb } from '@/lib/firebase-admin';
 
-// Force this route to run on the Node.js runtime (required for firebase-admin)
 export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
     // 1. Check if Admin SDK is ready
     if (!adminDb) {
-      console.error('❌ Sync API Error: adminDb is null. Check .env.local keys.');
       return NextResponse.json({ error: 'Server misconfigured: Missing Admin Keys' }, { status: 500 });
     }
 
     // 2. Parse the body
-    const { uid, email, displayName, photoURL } = await req.json();
+    const { uid, email, firstName, lastName, photoURL } = await req.json();
 
     if (!uid || !email) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -23,8 +20,7 @@ export async function POST(req: NextRequest) {
     const userRef = adminDb.collection('users').doc(uid);
     const userSnap = await userRef.get();
 
-    // 3. Define the role logic (UPDATED)
-    // Read from environment variable and split by comma to support multiple admins
+    // 3. Define the role logic
     const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
     // Create an array of lowercase emails for case-insensitive comparison
     const adminEmails = adminEmailsEnv.split(',').map(e => e.trim().toLowerCase());
@@ -36,39 +32,43 @@ export async function POST(req: NextRequest) {
       role = 'admin';
     }
 
+    // Prepare User Data
+    const userData = {
+      uid,
+      email,
+      firstName: firstName || '', 
+      lastName: lastName || '',
+      // Construct a display name if available, otherwise fallback
+      displayName: (firstName && lastName) 
+        ? `${firstName} ${lastName}` 
+        : (firstName || lastName || email.split('@')[0]),
+      photoURL: photoURL || '',
+      lastLogin: new Date().toISOString(),
+    };
+
     // 4. If user doesn't exist, CREATE them
     if (!userSnap.exists) {
       await userRef.set({
-        uid,
-        email,
-        displayName: displayName || '',
-        photoURL: photoURL || '',
-        role, // 'user' or 'admin'
+        ...userData,
+        role, // Set role on creation
         createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
       });
       return NextResponse.json({ message: 'User created', role });
     } 
     
-    // 5. If user exists, UPDATE last login
+    // 5. If user exists, UPDATE specific fields
     else {
       const existingRole = userSnap.data()?.role || 'user';
       
       // Upgrade to admin if email is in the list but role isn't set yet
-      // (We assume if you are in the env list, you should be an admin)
-      if (email && adminEmails.includes(email.toLowerCase()) && existingRole !== 'admin') {
+      if (role === 'admin' && existingRole !== 'admin') {
          await userRef.update({ role: 'admin' });
          role = 'admin';
       } else {
-         // Keep existing role (prevents demoting an admin manually set in DB if we wanted to)
          role = existingRole;
       }
 
-      await userRef.update({
-        lastLogin: new Date().toISOString(),
-        displayName: displayName || userSnap.data()?.displayName,
-        photoURL: photoURL || userSnap.data()?.photoURL,
-      });
+      await userRef.update(userData);
       
       return NextResponse.json({ message: 'User updated', role });
     }

@@ -1,10 +1,53 @@
 import type { Metadata } from "next";
-import "./globals.css"; // Relative import
-import { ThemeProvider } from "../context/ThemeContext"; // Relative import
+import "./globals.css"; // Relative import for styles
+import { ThemeProvider } from "../context/ThemeContext"; // Relative import for Context
+
+// --- CONFIGURATION ---
+// Update this to your production URL when deployed
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://www.practicalspirituality.com"; 
 
 export const metadata: Metadata = {
-  title: "Astromystic",
-  description: "Explore your cosmic potential",
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: "Practical Spirituality | Explore Your Cosmic Potential",
+    template: "%s | Practical Spirituality"
+  },
+  description: "Certified evolutionary astrology readings. Discover your natal chart, solar return, and synastry insights with a professional guide.",
+  keywords: ["Astrology", "Natal Chart", "Horoscope", "Zodiac", "Spirituality", "Readings"],
+  authors: [{ name: "Your Name" }],
+  creator: "Practical Spirituality",
+  
+  // Open Graph (Facebook, LinkedIn, iMessage, WhatsApp)
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    title: "Practical Spirituality | Unlock Your Star Chart",
+    description: "Evolutionary astrology readings to guide your life's journey.",
+    siteName: "Practical Spirituality",
+    images: [
+      {
+        url: "/og-card.jpg", // Ensure you place an image named og-card.jpg in your public/ folder
+        width: 1200,
+        height: 630,
+        alt: "Practical Spirituality - Cosmic Readings",
+      },
+    ],
+  },
+
+  // Twitter Card
+  twitter: {
+    card: "summary_large_image",
+    title: "Practical Spirituality | Explore Your Cosmic Potential",
+    description: "Evolutionary astrology readings to guide your life's journey.",
+    images: ["/og-card.jpg"],
+    creator: "@yourtwitterhandle", // Optional
+  },
+
+  // Icons
+  icons: {
+    icon: "/favicon.ico", 
+  },
 };
 
 export default function RootLayout({
@@ -15,7 +58,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Using standard Google Fonts link instead of next/font for better compatibility */}
+        {/* Standard Google Fonts Loading (Works reliably in all environments) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />

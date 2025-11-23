@@ -3,37 +3,34 @@
 import React, { useState } from 'react';
 import { Sun, Moon, Menu, X, LayoutDashboard, User as UserIcon, LogOut } from 'lucide-react';
 import { User } from 'firebase/auth';
-
-// =========================================================================
-// 1. REAL IMPORTS (Uncomment these in your local Next.js project)
-// =========================================================================
 import { useRouter } from 'next/navigation';
-import { useTheme } from '../context/ThemeContext';
 
-// =========================================================================
-// 2. PREVIEW MOCKS (Delete these in your local Next.js project)
-// =========================================================================
-// Mock Router
-/*
-const useRouter = () => ({ push: (path: string) => window.location.href = path });
-// Mock Theme Hook
-const useTheme = () => {
-  const [t, setT] = useState<'sun'|'moon'>('moon');
-  return { theme: t, toggleTheme: () => setT(p => p === 'sun' ? 'moon' : 'sun') };
-};
-*/
-// =========================================================================
+// NOTE: We removed useTheme from here. 
+// We now receive theme data from the parent to ensure sync.
+
 interface NavbarProps {
   user: User | null;
   authLoading: boolean;
   onOpenAuth: () => void;
   onSignOut: () => void;
-  currentStyles: any; 
+  currentStyles: any;
+  dashboardPath: string;
+  // NEW PROPS
+  theme: 'sun' | 'moon';
+  toggleTheme: () => void;
 }
 
-export default function Navbar({ user, authLoading, onOpenAuth, onSignOut, currentStyles }: NavbarProps) {
+export default function Navbar({ 
+  user, 
+  authLoading, 
+  onOpenAuth, 
+  onSignOut, 
+  currentStyles, 
+  dashboardPath,
+  theme,         // Received from parent
+  toggleTheme    // Received from parent
+}: NavbarProps) {
   const router = useRouter();
-  const { theme, toggleTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleNavClick = (id: string) => {
@@ -52,7 +49,7 @@ export default function Navbar({ user, authLoading, onOpenAuth, onSignOut, curre
             onClick={() => handleNavClick('home')}
           >
             {theme === 'sun' ? <Sun className="w-6 h-6 text-amber-500" /> : <Moon className="w-6 h-6 text-indigo-400" />}
-            <span className="font-serif text-xl tracking-wider font-bold">Astromystic<span className="font-light opacity-80"> Ilyasova</span></span>
+            <span className="font-serif text-xl tracking-wider font-bold">ASTRO<span className="font-light opacity-80">MYSTIC</span></span>
           </div>
 
           {/* DESKTOP NAV */}
@@ -80,7 +77,7 @@ export default function Navbar({ user, authLoading, onOpenAuth, onSignOut, curre
                 {user ? (
                   <div className="flex items-center gap-4 pl-4 border-l border-current border-opacity-20">
                     <button 
-                      onClick={() => router.push('/dashboard')} 
+                      onClick={() => router.push(dashboardPath)} 
                       className="text-sm font-semibold hover:opacity-80 flex items-center gap-2"
                     >
                        <LayoutDashboard className="w-4 h-4" /> Dashboard
@@ -138,7 +135,7 @@ export default function Navbar({ user, authLoading, onOpenAuth, onSignOut, curre
              {user ? (
                <div className="bg-current bg-opacity-5 p-4 rounded-xl space-y-4">
                 <div className="text-sm opacity-60">Signed in as <br/><span className="font-bold text-current opacity-100">{user.email}</span></div>
-                <button onClick={() => router.push('/dashboard')} className="flex items-center gap-3 w-full py-3 font-bold border-t border-current border-opacity-10">
+                <button onClick={() => router.push(dashboardPath)} className="flex items-center gap-3 w-full py-3 font-bold border-t border-current border-opacity-10">
                    <LayoutDashboard className="w-5 h-5" /> Go to Dashboard
                 </button>
                 <button onClick={onSignOut} className="flex items-center gap-3 w-full py-3 text-red-400 font-bold">

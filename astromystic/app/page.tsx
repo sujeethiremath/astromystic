@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { User } from 'firebase/auth';
+
+// =========================================================
+// 1. REAL IMPORTS (Uncomment these in your local Next.js project)
+// =========================================================
 import { useRouter } from 'next/navigation';
-
-// --- IMPORTS ---
 import { useTheme } from '../context/ThemeContext';
-import { auth } from '../lib/firebase';
-import { onAuthStateChanged, signOut, User } from 'firebase/auth';
-
-// --- COMPONENTS ---
+import { auth, db } from '../lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import AuthModal from '../components/AuthModal';
 import Navbar from '../components/Navbar';
 import StarField from '../components/StarField';
@@ -28,12 +30,29 @@ export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [dashboardPath, setDashboardPath] = useState('/dashboard'); 
 
-  // Auth Listener
+  // Auth Listener & Role Check
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
+      
+      if (currentUser) {
+        try {
+          // Check if the user has the 'admin' role in Firestore
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists() && userDoc.data().role === 'admin') {
+            setDashboardPath('/admin');
+          } else {
+            setDashboardPath('/dashboard');
+          }
+        } catch (e) {
+          console.error("Error fetching role", e);
+          // Fallback to default dashboard if error
+          setDashboardPath('/dashboard');
+        }
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -43,14 +62,15 @@ export default function Home() {
     if (!user) {
       setIsAuthModalOpen(true);
     } else {
-      router.push('/dashboard');
+      router.push(dashboardPath);
     }
   };
 
   const handleSignOut = async () => {
     try {
       await signOut(auth);
-      router.push('/'); // Ensure we stay on home or refresh state
+      setDashboardPath('/dashboard'); // Reset to default
+      // Stay on home page
     } catch (error) {
       console.error("Error signing out", error);
     }
@@ -88,22 +108,26 @@ export default function Home() {
   return (
     <div className={`min-h-screen transition-colors duration-700 ease-in-out ${current.bg} ${current.text} font-sans selection:bg-opacity-30 selection:bg-purple-500`}>
       
-      {/* Modals & Overlays */}
+      {/* Auth Modal */}
       <AuthModal 
         isOpen={isAuthModalOpen} 
         onClose={() => setIsAuthModalOpen(false)} 
         theme={theme} 
       />
 
-      {/* Header */}
+      {/* Navigation Bar */}
       <Navbar 
         user={user} 
         authLoading={authLoading}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onSignOut={handleSignOut}
         currentStyles={current}
+        dashboardPath={dashboardPath}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
+      {/* Main Content Area */}
       <main className="pt-16 relative">
         <StarField theme={theme} />
 

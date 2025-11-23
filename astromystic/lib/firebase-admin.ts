@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert, getApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth'; // Add this import
 
 // Helper to log missing keys to your VS Code Terminal
 const checkEnvVars = () => {
@@ -10,8 +11,6 @@ const checkEnvVars = () => {
   
   if (missing.length > 0) {
     console.error('❌ [FIREBASE ADMIN] Critical Error: Missing Environment Variables:', missing.join(', '));
-  } else {
-    console.log('✅ [FIREBASE ADMIN] Environment variables found. Attempting to initialize...');
   }
 };
 
@@ -20,12 +19,10 @@ const getFirebaseAdminApp = () => {
     return getApp();
   }
 
-  // Run the check
   checkEnvVars();
 
-  // Retrieve keys from Environment Variables
   const privateKey = process.env.FIREBASE_PRIVATE_KEY 
-    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n') // Fix newlines for Vercel/Env
+    ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
     : undefined;
 
   const serviceAccount = {
@@ -34,21 +31,20 @@ const getFirebaseAdminApp = () => {
     privateKey: privateKey,
   };
 
-  // Only initialize if we have credentials
   if (serviceAccount.privateKey && serviceAccount.clientEmail) {
     try {
       return initializeApp({
         credential: cert(serviceAccount),
       });
     } catch (error) {
-      console.error('❌ [FIREBASE ADMIN] Initialization Failed. Check your Private Key format.', error);
+      console.error('❌ [FIREBASE ADMIN] Initialization Failed.', error);
     }
-  } else {
-    console.error('❌ [FIREBASE ADMIN] privateKey or clientEmail is undefined.');
   }
-  
   return null;
 };
 
 const app = getFirebaseAdminApp();
+
+// Export Auth and Firestore
 export const adminDb = app ? getFirestore(app) : null;
+export const adminAuth = app ? getAuth(app) : null;
