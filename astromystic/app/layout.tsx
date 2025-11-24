@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import "./globals.css"; // Relative import for styles
-import { ThemeProvider } from "../context/ThemeContext"; // Relative import for Context
+import "./globals.css"; 
+import { ThemeProvider } from "../context/ThemeContext"; 
 
 // --- CONFIGURATION ---
-// Update this to your production URL when deployed
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://www.practicalspirituality.com"; 
+// Updated to your live Vercel URL
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://practicalspirituality.vercel.app"; 
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     siteName: "Practical Spirituality",
     images: [
       {
-        url: "/og-card.jpg", // Ensure you place an image named og-card.jpg in your public/ folder
+        url: "/og-card.jpg", // Ensure you have a file named og-card.jpg in your public/ folder
         width: 1200,
         height: 630,
         alt: "Practical Spirituality - Cosmic Readings",
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     title: "Practical Spirituality | Explore Your Cosmic Potential",
     description: "Evolutionary astrology readings to guide your life's journey.",
     images: ["/og-card.jpg"],
-    creator: "@yourtwitterhandle", // Optional
+    creator: "@yourtwitterhandle", 
   },
 
   // Icons
@@ -58,7 +58,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Standard Google Fonts Loading (Works reliably in all environments) */}
+        {/* Standard Google Fonts Loading */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />
