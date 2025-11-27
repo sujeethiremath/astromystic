@@ -1,15 +1,13 @@
 "use client";
 
 import React, { useState } from 'react';
-// Added 'Star' to imports for the logo
 import { Sun, Moon, Menu, X, LayoutDashboard, User as UserIcon, LogOut, Star } from 'lucide-react';
 import { User } from 'firebase/auth';
 
 // =========================================================
 // 1. REAL IMPORTS (Uncomment these in your local Next.js project)
 // =========================================================
-import { useRouter, usePathname } from 'next/navigation';
-
+ import { useRouter, usePathname } from 'next/navigation';
 
 interface NavbarProps {
   user: User | null;
@@ -85,7 +83,7 @@ export default function Navbar({
             <div className="flex flex-col -space-y-1">
                <div className="flex items-baseline">
                  {/* 'gul' in cursive style */}
-                 <span className="text-2xl sm:text-3xl font-normal mr-1 italic opacity-90" style={{ fontFamily: 'Brush Script MT, cursive' }}>
+                 <span className="text-3xl font-normal mr-1 opacity-90" style={{ fontFamily: 'Brush Script MT, cursive' }}>
                    gul
                  </span>
                  {/* 'NARA' in bold serif */}
