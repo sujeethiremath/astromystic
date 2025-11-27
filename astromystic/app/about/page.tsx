@@ -275,7 +275,7 @@ export default function AboutPage() {
                   <p className="opacity-80 mb-6 flex-grow">{service.desc}</p>
 
                   <div className="mt-auto pt-4 border-t border-current border-opacity-10">
-                    <div className="text-xs font-bold opacity-50 mb-2 uppercase">Requirements</div>
+                    <div className="text-xs font-bold opacity-50 mb-2 uppercase">Details</div>
                     <ul className="space-y-1 text-sm opacity-70">
                       {service.details.map((detail, i) => (
                         <li key={i} className="flex items-start gap-2">
@@ -301,7 +301,22 @@ export default function AboutPage() {
         
         </div>
       </main>
-      
+      {/* POWERED BY SECTION */}
+      <section className={`py-12 text-center border-t border-current border-opacity-10 ${current.bg} ${current.text}`}>
+         <a 
+           href="https://sujeethiremath.com" 
+           target="_blank" 
+           rel="noopener noreferrer"
+           className="inline-flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity duration-300"
+         >
+           <span className="text-sm uppercase tracking-widest">Powered by</span>
+           <img 
+             src="/hiremath-logo.webp" 
+             alt="Hiremath Labs" 
+             className={`h-16 w-auto ${theme === 'moon' ? 'invert' : ''}`} 
+           /> 
+         </a>
+      </section>
       <Footer currentStyles={current} />
     </div>
   );
