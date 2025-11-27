@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   BookOpen, Heart, Users, 
-  FileText, Video 
+  FileText, Video,
+  Sun, Moon, Star
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
@@ -175,9 +176,36 @@ export default function AboutPage() {
         
         <div className="max-w-4xl mx-auto relative z-10 space-y-20">
           
-          {/* SECTION 1: INTRO */}
-          <section className="text-center space-y-6">
-            <h1 className="text-4xl md:text-6xl font-serif font-bold">Wisdom of the Stars</h1>
+          {/* SECTION 1: INTRO - UPDATED BRANDING */}
+          <section className="text-center space-y-8">
+            {/* Large Logo Design */}
+            <div className="flex justify-center items-center gap-6 animate-fade-in">
+               {/* Vertical Icon Stack (Scaled Up) */}
+               <div className="flex flex-col items-center gap-2 pr-6 border-r-2 border-current border-opacity-40 py-2">
+                  <Sun className={`w-8 h-8 ${theme === 'sun' ? 'text-amber-500' : 'text-indigo-300'} opacity-90`} />
+                  <div className="relative w-8 h-8">
+                    <Moon className={`w-8 h-8 ${theme === 'sun' ? 'text-amber-600' : 'text-indigo-400'} opacity-90`} />
+                    <Star className={`absolute -top-1 -right-2 w-4 h-4 fill-current ${theme === 'sun' ? 'text-amber-400' : 'text-indigo-200'} opacity-90`} />
+                  </div>
+                  <Star className={`w-8 h-8 ${theme === 'sun' ? 'text-amber-700' : 'text-indigo-500'} opacity-90`} />
+               </div>
+
+               {/* Text Group (Scaled Up) */}
+               <div className="flex flex-col -space-y-2 text-left">
+                  <div className="flex items-baseline">
+                    <span className="text-5xl md:text-7xl font-normal mr-2 italic opacity-90" style={{ fontFamily: 'Brush Script MT, cursive' }}>
+                      gul
+                    </span>
+                    <span className="font-serif text-4xl md:text-6xl font-bold tracking-wide">
+                      NARA
+                    </span>
+                  </div>
+                  <span className="font-sans text-sm md:text-base uppercase tracking-[0.35em] opacity-70 ml-1">
+                    Astrology
+                  </span>
+               </div>
+            </div>
+
             <p className="text-lg md:text-xl opacity-80 max-w-2xl mx-auto leading-relaxed">
               Astrology is an ancient symbolic system that studies the relationship between celestial movements and human experience.
             </p>
