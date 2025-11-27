@@ -1,17 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Compass, X, Send, Sparkles, Zap } from 'lucide-react';
+import { 
+  Sun, Moon, Compass, X, Send, Sparkles, Zap, 
+  Heart, Users, Calendar, Video, CheckCircle 
+} from 'lucide-react';
 
-// =========================================================
-// 1. REAL IMPORTS (Uncomment these in your local Next.js project)
-// =========================================================
+
 import BookingModal from './BookingModal';
 import { useTheme } from '../../context/ThemeContext';
 import { auth, db } from '../../lib/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
-
-
 
 interface BookingListProps {
   currentStyles: any;
@@ -31,7 +30,6 @@ export default function BookingList({ currentStyles }: BookingListProps) {
   useEffect(() => {
     if (!auth.currentUser) return;
     
-    // Real-time listener for the 'credits' field on the user document
     const unsub = onSnapshot(doc(db, 'users', auth.currentUser.uid), (docSnapshot) => {
       if (docSnapshot.exists()) {
         setCredits(docSnapshot.data()?.credits || 0);
@@ -46,32 +44,52 @@ export default function BookingList({ currentStyles }: BookingListProps) {
     setIsRedemption(redemption);
   };
 
+  // Updated Service List per your requirements
   const ITEMS = [
     { 
-      title: 'Natal Chart', 
+      title: 'Natal Chart Reading', 
       icon: <Compass className="w-6 h-6" />, 
+      price: '$100', 
+      desc: 'Video + PDF Analysis. Uncover your potential and life path.' 
+    },
+    { 
+      title: 'Synastry Reading', 
+      icon: <Heart className="w-6 h-6" />, 
       price: '$150', 
-      desc: 'Discover your blueprint.' 
+      desc: 'Video + PDF. Relationship compatibility guidance.' 
     },
     { 
-      title: 'Solar Return', 
-      icon: <Sun className="w-6 h-6" />, 
-      price: '$120', 
-      desc: 'Your year ahead forecast.' 
+      title: 'Synastry Video Call', 
+      icon: <Video className="w-6 h-6" />, 
+      price: '$180', 
+      desc: '1 Hour Live Call + PDF. Deep dive into relationship dynamics.' 
     },
     { 
-      title: 'Synastry', 
-      icon: <Moon className="w-6 h-6" />, 
-      price: '$200', 
-      desc: 'Relationship dynamics.' 
+      title: 'Composite Chart', 
+      icon: <Users className="w-6 h-6" />, 
+      price: '$130', 
+      desc: 'Video Response + PDF. The relationship as its own entity.' 
     },
     { 
-      title: 'Cosmic Package', 
+      title: 'Synastry + Composite', 
       icon: <Sparkles className="w-6 h-6" />, 
-      price: '$400', 
-      desc: '4 Readings (Valid for 90 days).',
-      isPackage: true 
+      price: '$200', 
+      desc: 'Video Call + PDF. Complete relationship analysis.' 
+    },
+    { 
+      title: 'Transit Reading', 
+      icon: <Calendar className="w-6 h-6" />, 
+      price: '$100', 
+      desc: 'Video Response + PDF. Navigate timing and life events.' 
     }
+    // },
+    // { 
+    //   title: 'Cosmic Package', 
+    //   icon: <Zap className="w-6 h-6" />, 
+    //   price: '$400', 
+    //   desc: '4 Readings of your choice (Valid for 90 days).',
+    //   isPackage: true 
+    // }
   ];
 
   return (

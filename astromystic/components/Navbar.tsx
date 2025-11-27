@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Sun, Moon, Menu, X, LayoutDashboard, User as UserIcon, LogOut } from 'lucide-react';
+// Added 'Star' to imports for the logo
+import { Sun, Moon, Menu, X, LayoutDashboard, User as UserIcon, LogOut, Star } from 'lucide-react';
 import { User } from 'firebase/auth';
 
 // =========================================================
 // 1. REAL IMPORTS (Uncomment these in your local Next.js project)
 // =========================================================
-import { useRouter } from 'next/navigation';
-import { useTheme } from '../context/ThemeContext';
+import { useRouter, usePathname } from 'next/navigation';
 
 
 interface NavbarProps {
@@ -18,8 +18,8 @@ interface NavbarProps {
   onSignOut: () => void;
   currentStyles: any; 
   dashboardPath: string;
-  theme: 'sun' | 'moon'; // Received from parent for strict control
-  toggleTheme: () => void; // Received from parent
+  theme: 'sun' | 'moon';
+  toggleTheme: () => void;
 }
 
 export default function Navbar({ 
@@ -33,28 +33,73 @@ export default function Navbar({
   toggleTheme 
 }: NavbarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleNavClick = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) element.scrollIntoView({ behavior: 'smooth' });
     setIsMenuOpen(false);
+    
+    if (id === 'about') {
+      router.push('/about');
+      return;
+    }
+    
+    if (id === 'home') {
+      if (pathname === '/') {
+         window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+         router.push('/');
+      }
+      return;
+    }
+
+    if (pathname === '/') {
+      const element = document.getElementById(id);
+      if (element) element.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      router.push(`/#${id}`);
+    }
   };
 
   return (
     <nav className={`fixed top-0 w-full z-50 border-b border-opacity-10 border-current transition-all duration-300 ${currentStyles.navBg}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
-          {/* LOGO - UPDATED BRANDING */}
+          
+          {/* --- NEW LOGO DESIGN (Matches Uploaded Image) --- */}
           <div 
-            className="flex items-center gap-2 cursor-pointer z-50"
+            className="flex items-center gap-3 cursor-pointer z-50 group"
             onClick={() => handleNavClick('home')}
           >
-            {theme === 'sun' ? <Sun className="w-6 h-6 text-amber-500" /> : <Moon className="w-6 h-6 text-indigo-400" />}
-            <span className="font-serif text-lg sm:text-xl tracking-wider font-bold">
-              PRACTICAL<span className="font-light opacity-80">SPIRITUALITY</span>
-            </span>
+            {/* 1. Vertical Icon Stack */}
+            <div className="flex flex-col items-center gap-0.5 pr-3 border-r border-current border-opacity-40 py-1">
+               <Sun className="w-3 h-3 opacity-80" />
+               <div className="relative w-3 h-3">
+                 <Moon className="w-3 h-3 opacity-80" />
+                 <Star className="w-1.5 h-1.5 absolute -top-0.5 -right-1 fill-current opacity-80" />
+               </div>
+               <Star className="w-3 h-3 opacity-80" />
+            </div>
+
+            {/* 2. Text Group */}
+            <div className="flex flex-col -space-y-1">
+               <div className="flex items-baseline">
+                 {/* 'gul' in cursive style */}
+                 <span className="text-2xl sm:text-3xl font-normal mr-1 italic opacity-90" style={{ fontFamily: 'Brush Script MT, cursive' }}>
+                   gul
+                 </span>
+                 {/* 'NARA' in bold serif */}
+                 <span className="font-serif text-xl sm:text-2xl font-bold tracking-wide">
+                   NARA
+                 </span>
+               </div>
+               {/* 'Astrology' spaced out below */}
+               <span className="font-sans text-[0.6rem] sm:text-[0.65rem] uppercase tracking-[0.25em] opacity-70 ml-1">
+                 Astrology
+               </span>
+            </div>
           </div>
+          {/* ----------------------- */}
 
           {/* DESKTOP NAV */}
           <div className="hidden md:flex items-center gap-8">
@@ -135,6 +180,7 @@ export default function Navbar({
                   {theme === 'sun' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
                 </button>
              </div>
+
              {user ? (
                <div className="bg-current bg-opacity-5 p-4 rounded-xl space-y-4">
                 <div className="text-sm opacity-60">Signed in as <br/><span className="font-bold text-current opacity-100">{user.email}</span></div>
