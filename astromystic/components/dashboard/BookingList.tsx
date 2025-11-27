@@ -3,10 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Sun, Moon, Compass, X, Send, Sparkles, Zap, 
-  Heart, Users, Calendar, Video, CheckCircle 
+  Heart, Users, Calendar, Video 
 } from 'lucide-react';
 
-
+// Real Imports
 import BookingModal from './BookingModal';
 import { useTheme } from '../../context/ThemeContext';
 import { auth, db } from '../../lib/firebase';
@@ -14,6 +14,15 @@ import { doc, onSnapshot } from 'firebase/firestore';
 
 interface BookingListProps {
   currentStyles: any;
+}
+
+// 1. Define the shape of a service item
+interface ServiceItem {
+  title: string;
+  icon: React.ReactNode;
+  price: string;
+  desc: string;
+  isPackage?: boolean; // Optional property
 }
 
 export default function BookingList({ currentStyles }: BookingListProps) {
@@ -44,8 +53,8 @@ export default function BookingList({ currentStyles }: BookingListProps) {
     setIsRedemption(redemption);
   };
 
-  // Updated Service List per your requirements
-  const ITEMS = [
+  // 2. Explicitly type the array as ServiceItem[]
+  const ITEMS: ServiceItem[] = [
     { 
       title: 'Natal Chart Reading', 
       icon: <Compass className="w-6 h-6" />, 
@@ -81,15 +90,14 @@ export default function BookingList({ currentStyles }: BookingListProps) {
       icon: <Calendar className="w-6 h-6" />, 
       price: '$100', 
       desc: 'Video Response + PDF. Navigate timing and life events.' 
+    },
+    { 
+      title: 'Cosmic Package', 
+      icon: <Zap className="w-6 h-6" />, 
+      price: '$400', 
+      desc: '4 Readings of your choice (Valid for 90 days).',
+      isPackage: true 
     }
-    // },
-    // { 
-    //   title: 'Cosmic Package', 
-    //   icon: <Zap className="w-6 h-6" />, 
-    //   price: '$400', 
-    //   desc: '4 Readings of your choice (Valid for 90 days).',
-    //   isPackage: true 
-    // }
   ];
 
   return (
