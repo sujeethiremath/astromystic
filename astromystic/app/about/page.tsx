@@ -193,7 +193,8 @@ export default function AboutPage() {
                {/* Text Group (Scaled Up) */}
                <div className="flex flex-col -space-y-2 text-left">
                   <div className="flex items-baseline">
-                    <span className="text-5xl md:text-7xl font-normal mr-2 italic opacity-90" style={{ fontFamily: 'Brush Script MT, cursive' }}>
+                    {/* Removed 'italic' class to fix mobile rendering of 'l' */}
+                    <span className="text-5xl md:text-7xl font-normal mr-2 opacity-90" style={{ fontFamily: 'Brush Script MT, cursive' }}>
                       gul
                     </span>
                     <span className="font-serif text-4xl md:text-6xl font-bold tracking-wide">
@@ -274,7 +275,7 @@ export default function AboutPage() {
                   <p className="opacity-80 mb-6 flex-grow">{service.desc}</p>
 
                   <div className="mt-auto pt-4 border-t border-current border-opacity-10">
-                    <div className="text-xs font-bold opacity-50 mb-2 uppercase">Details</div>
+                    <div className="text-xs font-bold opacity-50 mb-2 uppercase">Requirements</div>
                     <ul className="space-y-1 text-sm opacity-70">
                       {service.details.map((detail, i) => (
                         <li key={i} className="flex items-start gap-2">
