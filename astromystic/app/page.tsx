@@ -1,11 +1,29 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Sun, Moon, Sparkles, ArrowRight, Menu, X, 
-  Compass, LogOut, LayoutDashboard, User as UserIcon,
-  Mail, Lock, ArrowLeft, Send, CheckCircle, AlertCircle,
-  BookOpen, Heart, Users, Video, FileText, Star 
+import {
+  Sun,
+  Moon,
+  Sparkles,
+  ArrowRight,
+  Menu,
+  X,
+  Compass,
+  LogOut,
+  LayoutDashboard,
+  User as UserIcon,
+  Mail,
+  Lock,
+  ArrowLeft,
+  Send,
+  CheckCircle,
+  AlertCircle,
+  BookOpen,
+  Heart,
+  Users,
+  Video,
+  FileText,
+  Star,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -26,14 +44,14 @@ import { trackEvent, identifyUser, resetUser } from '../lib/mixpanel';
 export default function Home() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-  
+
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [dashboardPath, setDashboardPath] = useState('/dashboard'); 
+  const [dashboardPath, setDashboardPath] = useState('/dashboard');
 
   useEffect(() => {
-    trackEvent("Page Viewed", { page: "Landing Homepage", theme: theme });
+    trackEvent('Page Viewed', { page: 'Landing Homepage', theme: theme });
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
@@ -41,62 +59,115 @@ export default function Home() {
         identifyUser(currentUser.uid, currentUser.email || undefined);
         try {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-          if (userDoc.exists() && userDoc.data().role === 'admin') setDashboardPath('/admin');
+          if (userDoc.exists() && userDoc.data().role === 'admin')
+            setDashboardPath('/admin');
           else setDashboardPath('/dashboard');
-        } catch (e) { setDashboardPath('/dashboard'); }
+        } catch (e) {
+          setDashboardPath('/dashboard');
+        }
       }
     });
     return () => unsubscribe();
   }, []);
 
   const handleBookNow = () => {
-    trackEvent("Button Clicked", { button: "Book a Reading", location: "Homepage" });
+    trackEvent('Button Clicked', {
+      button: 'Book a Reading',
+      location: 'Homepage',
+    });
     if (!user) setIsAuthModalOpen(true);
     else router.push(dashboardPath);
   };
 
   const handleSignOut = async () => {
-    trackEvent("User Signed Out");
+    trackEvent('User Signed Out');
     resetUser();
     await signOut(auth);
     setDashboardPath('/dashboard');
-    router.push('/'); 
+    router.push('/');
   };
 
   const styles = {
     sun: {
-      bg: 'bg-amber-50', text: 'text-amber-900', accent: 'text-amber-600',
-      cardBg: 'bg-white', cardBorder: 'border-amber-100',
+      bg: 'bg-amber-50',
+      text: 'text-amber-900',
+      accent: 'text-amber-600',
+      cardBg: 'bg-white',
+      cardBorder: 'border-amber-100',
       button: 'bg-amber-600 hover:bg-amber-700 text-white',
-      navBg: 'bg-amber-50/90 backdrop-blur-md', footerBg: 'bg-amber-100',
-      gradient: 'from-amber-400 to-orange-500'
+      navBg: 'bg-amber-50/90 backdrop-blur-md',
+      footerBg: 'bg-amber-100',
+      gradient: 'from-amber-400 to-orange-500',
     },
     moon: {
-      bg: 'bg-slate-950', text: 'text-slate-100', accent: 'text-indigo-400',
-      cardBg: 'bg-slate-900', cardBorder: 'border-indigo-900/50',
+      bg: 'bg-slate-950',
+      text: 'text-slate-100',
+      accent: 'text-indigo-400',
+      cardBg: 'bg-slate-900',
+      cardBorder: 'border-indigo-900/50',
       button: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-      navBg: 'bg-slate-950/90 backdrop-blur-md', footerBg: 'bg-slate-900',
-      gradient: 'from-indigo-400 to-purple-600'
-    }
+      navBg: 'bg-slate-950/90 backdrop-blur-md',
+      footerBg: 'bg-slate-900',
+      gradient: 'from-indigo-400 to-purple-600',
+    },
   };
   const current = styles[theme];
 
   return (
-    <div className={`min-h-screen transition-colors duration-700 ease-in-out ${current.bg} ${current.text} font-sans selection:bg-opacity-30 selection:bg-purple-500`}>
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} theme={theme} />
-      <Navbar user={user} authLoading={authLoading} onOpenAuth={() => { trackEvent("Auth Modal Opened", { source: "Navbar" }); setIsAuthModalOpen(true); }} onSignOut={handleSignOut} currentStyles={current} dashboardPath={dashboardPath} theme={theme} toggleTheme={() => { trackEvent("Theme Toggled"); toggleTheme(); }} />
+    <div
+      className={`min-h-screen transition-colors duration-700 ease-in-out ${current.bg} ${current.text} font-sans selection:bg-opacity-30 selection:bg-purple-500`}
+    >
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        theme={theme}
+      />
+      <Navbar
+        user={user}
+        authLoading={authLoading}
+        onOpenAuth={() => {
+          trackEvent('Auth Modal Opened', { source: 'Navbar' });
+          setIsAuthModalOpen(true);
+        }}
+        onSignOut={handleSignOut}
+        currentStyles={current}
+        dashboardPath={dashboardPath}
+        theme={theme}
+        toggleTheme={() => {
+          trackEvent('Theme Toggled');
+          toggleTheme();
+        }}
+      />
       <main className="pt-16 relative">
         <StarField theme={theme} />
         <Hero theme={theme} currentStyles={current} onBookNow={handleBookNow} />
-        <Services theme={theme} currentStyles={current} onBookNow={handleBookNow} />
+        <Services
+          theme={theme}
+          currentStyles={current}
+          onBookNow={handleBookNow}
+        />
         <About theme={theme} />
         <Contact theme={theme} />
         {/* POWERED BY SECTION */}
-        <section className={`py-12 text-center border-t border-current border-opacity-10 ${current.bg} ${current.text}`}>
-           <a href="https://sujeethiremath.com" target="_blank" rel="noopener noreferrer" className="inline-flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity duration-300" onClick={() => trackEvent("Powered By Link Clicked")}>
-             <span className="text-sm uppercase tracking-widest">Powered by</span>
-             <img src="/hiremath-logo.webp" alt="Hiremath Labs" className={`h-16 w-auto ${theme === 'moon' ? 'invert' : ''}`} /> 
-           </a>
+        <section
+          className={`py-12 text-center border-t border-current border-opacity-10 ${current.bg} ${current.text}`}
+        >
+          <a
+            href="https://sujeethiremath.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity duration-300"
+            onClick={() => trackEvent('Powered By Link Clicked')}
+          >
+            <span className="text-sm uppercase tracking-widest">
+              Powered by
+            </span>
+            <img
+              src="/hiremath-logo.webp"
+              alt="Hiremath Labs"
+              className={`h-16 w-auto ${theme === 'moon' ? 'invert' : ''}`}
+            />
+          </a>
         </section>
         <Footer currentStyles={current} />
       </main>

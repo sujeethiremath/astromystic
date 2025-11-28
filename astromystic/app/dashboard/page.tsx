@@ -1,10 +1,22 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Sun, Moon, Play, LogOut, 
-  LayoutDashboard, Compass, Calendar, 
-  ShoppingBag, ExternalLink, Video, Star, User as UserIcon, X, Send, CheckCircle 
+import {
+  Sun,
+  Moon,
+  Play,
+  LogOut,
+  LayoutDashboard,
+  Compass,
+  Calendar,
+  ShoppingBag,
+  ExternalLink,
+  Video,
+  Star,
+  User as UserIcon,
+  X,
+  Send,
+  CheckCircle,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
@@ -19,13 +31,13 @@ import { doc, getDoc } from 'firebase/firestore';
 import StarField from '../../components/StarField';
 import DashboardNavbar from '../../components/dashboard/DashboardNavbar';
 // FIXED: Plural 'ReadingsList' to match filename
-import ReadingsList from '../../components/dashboard/ReadingList'; 
+import ReadingsList from '../../components/dashboard/ReadingList';
 import BookingList from '../../components/dashboard/BookingList';
 
 export default function Dashboard() {
   const router = useRouter();
   const { theme } = useTheme();
-  
+
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'readings' | 'book'>('readings');
@@ -66,7 +78,7 @@ export default function Dashboard() {
       accent: 'bg-amber-100 text-amber-700',
       button: 'bg-amber-600 hover:bg-amber-700 text-white',
       nav: 'bg-amber-50/90 border-amber-200',
-      secondary: 'text-amber-600'
+      secondary: 'text-amber-600',
     },
     moon: {
       bg: 'bg-slate-950',
@@ -76,52 +88,56 @@ export default function Dashboard() {
       accent: 'bg-slate-800 text-indigo-300',
       button: 'bg-indigo-600 hover:bg-indigo-700 text-white',
       nav: 'bg-slate-950/90 border-indigo-900',
-      secondary: 'text-indigo-400'
-    }
+      secondary: 'text-indigo-400',
+    },
   };
 
   const current = styles[theme];
 
   if (loading) {
     return (
-      <div className={`min-h-screen flex items-center justify-center ${current.bg} ${current.text}`}>
+      <div
+        className={`min-h-screen flex items-center justify-center ${current.bg} ${current.text}`}
+      >
         Loading your stars...
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-500 ${current.bg} ${current.text} font-sans`}>
+    <div
+      className={`min-h-screen transition-colors duration-500 ${current.bg} ${current.text} font-sans`}
+    >
       <StarField theme={theme} />
-      
-      <DashboardNavbar 
-        user={user} 
-        onSignOut={handleSignOut} 
-        currentStyles={current} 
+
+      <DashboardNavbar
+        user={user}
+        onSignOut={handleSignOut}
+        currentStyles={current}
       />
 
       <main className="pt-24 px-4 pb-12 max-w-7xl mx-auto relative z-10">
-        
         {/* Welcome Header */}
         <div className="mb-12">
           <h1 className="text-3xl md:text-4xl font-serif mb-2">
             Welcome back, {user?.displayName || 'Star Traveler'}
           </h1>
           <p className="opacity-70 max-w-2xl">
-            Here you can access your personal reading library or chart your next course.
+            Here you can access your personal reading library or chart your next
+            course.
           </p>
         </div>
 
         {/* Tabs / Actions */}
         {/* ADDED: overflow-x-auto for safe mobile scrolling */}
         <div className="flex gap-6 mb-8 border-b border-current border-opacity-10 pb-1 overflow-x-auto">
-          <button 
+          <button
             onClick={() => setActiveTab('readings')}
             className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 whitespace-nowrap ${activeTab === 'readings' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
           >
             MY LIBRARY
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('book')}
             className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 whitespace-nowrap ${activeTab === 'book' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
           >
@@ -131,15 +147,14 @@ export default function Dashboard() {
 
         {/* DYNAMIC CONTENT AREA */}
         {activeTab === 'readings' ? (
-          <ReadingsList 
-            currentStyles={current} 
-            theme={theme} 
-            onBrowse={() => setActiveTab('book')} 
+          <ReadingsList
+            currentStyles={current}
+            theme={theme}
+            onBrowse={() => setActiveTab('book')}
           />
         ) : (
           <BookingList currentStyles={current} />
         )}
-
       </main>
     </div>
   );

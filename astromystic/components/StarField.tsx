@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React from 'react';
 
@@ -8,7 +8,7 @@ interface StarFieldProps {
 
 const StarField = ({ theme }: StarFieldProps) => {
   if (theme === 'sun') return null;
-  
+
   // Fixed positions for consistent rendering
   const stars = [
     { top: '10%', left: '15%', size: 2, opacity: 0.8 },
@@ -23,7 +23,7 @@ const StarField = ({ theme }: StarFieldProps) => {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
       {stars.map((star, i) => (
-        <div 
+        <div
           key={i}
           className="absolute bg-white rounded-full animate-pulse"
           style={{
@@ -32,7 +32,7 @@ const StarField = ({ theme }: StarFieldProps) => {
             width: `${star.size}px`,
             height: `${star.size}px`,
             opacity: star.opacity,
-            animationDuration: `${3 + i}s`
+            animationDuration: `${3 + i}s`,
           }}
         />
       ))}

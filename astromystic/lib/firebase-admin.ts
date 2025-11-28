@@ -5,12 +5,16 @@ import { getAuth } from 'firebase-admin/auth'; // Add this import
 // Helper to log missing keys to your VS Code Terminal
 const checkEnvVars = () => {
   const missing = [];
-  if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) missing.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
+  if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID)
+    missing.push('NEXT_PUBLIC_FIREBASE_PROJECT_ID');
   if (!process.env.FIREBASE_CLIENT_EMAIL) missing.push('FIREBASE_CLIENT_EMAIL');
   if (!process.env.FIREBASE_PRIVATE_KEY) missing.push('FIREBASE_PRIVATE_KEY');
-  
+
   if (missing.length > 0) {
-    console.error('❌ [FIREBASE ADMIN] Critical Error: Missing Environment Variables:', missing.join(', '));
+    console.error(
+      '❌ [FIREBASE ADMIN] Critical Error: Missing Environment Variables:',
+      missing.join(', ')
+    );
   }
 };
 
@@ -21,7 +25,7 @@ const getFirebaseAdminApp = () => {
 
   checkEnvVars();
 
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY 
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY
     ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
     : undefined;
 
