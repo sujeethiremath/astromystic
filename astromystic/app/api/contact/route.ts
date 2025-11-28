@@ -51,9 +51,7 @@ export async function POST(req: Request) {
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
           <h3>Message:</h3>
           <p style="background: #f4f4f4; padding: 15px; border-radius: 5px; white-space: pre-wrap;">${message}</p>
-
-          <br /><br />
-          
+          <br />
 <!-- EMAIL SIGNATURE -->
 <div style="opacity:0.9; margin-top:30px; padding-top:20px; border-top:1px solid #eee;">
   <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse; line-height:1;">

@@ -19,6 +19,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
+import Footer from '../../components/Footer';
 
 // =========================================================
 // 1. REAL IMPORTS
@@ -156,6 +157,7 @@ export default function Dashboard() {
           <BookingList currentStyles={current} />
         )}
       </main>
+      <Footer currentStyles={current} />
     </div>
   );
 }

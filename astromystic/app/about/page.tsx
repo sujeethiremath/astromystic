@@ -383,30 +383,6 @@ export default function AboutPage() {
           </section>
         </div>
       </main>
-
-      {/* POWERED BY SECTION */}
-      <section
-        className={`py-12 text-center border-t border-current border-opacity-10 ${current.bg} ${current.text}`}
-      >
-        <a
-          href="https://sujeethiremath.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity duration-300"
-          onClick={() =>
-            trackEvent('Powered By Link Clicked', { location: 'About Page' })
-          }
-        >
-          <span className="text-sm uppercase tracking-widest">Powered by</span>
-          {/* Inverts logo color in dark mode to ensure visibility */}
-          <img
-            src="/hiremath-logo.webp"
-            alt="Hiremath Labs"
-            className={`h-16 w-auto ${theme === 'moon' ? 'invert' : ''}`}
-          />
-        </a>
-      </section>
-
       <Footer currentStyles={current} />
     </div>
   );

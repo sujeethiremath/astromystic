@@ -181,7 +181,7 @@ export async function POST(req: Request) {
                 <p>You will receive another email notification as soon as your reading video is uploaded and ready to view in your dashboard.</p>
                 <p>We appreciate your patience as each reading is prepared with care.</p>
 
-                <br /><br />
+                <br />
           
 <!-- EMAIL SIGNATURE -->
 <div style="opacity:0.9; margin-top:30px; padding-top:20px; border-top:1px solid #eee;">

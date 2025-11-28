@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
                 <a href="${dashboardLink}">${dashboardLink}</a>
               </p>
 
-              <br /><br />
+              <br />
               
 <!-- EMAIL SIGNATURE -->
 <div style="opacity:0.9; margin-top:30px; padding-top:20px; border-top:1px solid #eee;">

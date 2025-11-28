@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+// ADDED: Send to the imports
 import {
   Shield,
   Users,
   Video,
+  Plus,
   Save,
   Check,
   Search,
@@ -19,6 +21,9 @@ import {
   Inbox,
   History,
   User as UserIcon,
+  Trash2,
+  Mail,
+  Send,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -64,6 +69,11 @@ interface RequestData {
   totalReadings?: number;
 }
 
+interface VideoItem {
+  title: string;
+  url: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
@@ -92,6 +102,12 @@ export default function AdminDashboard() {
   // Success Modal State
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
+
+  // NEW: Email Modal State
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailMessage, setEmailMessage] = useState('');
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // 1. INITIAL AUTH CHECK
   useEffect(() => {
@@ -130,6 +146,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.users) {
         setUsers(data.users);
+        setLoading(false);
       }
     } catch (error) {
       console.error('API Error:', error);
@@ -161,7 +178,6 @@ export default function AdminDashboard() {
         );
         setRequests(reqs);
 
-        // Deselect request if it moves to history (vanishes from open)
         if (selectedRequest && !reqs.find((r) => r.id === selectedRequest.id)) {
           setSelectedRequest(null);
         }
@@ -175,11 +191,11 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, [selectedUser, activeTab]);
 
-  // 4. HANDLE ASSIGNMENT WORKFLOW
+  // 4. INIT ASSIGNMENT
   const initAssignment = (req: RequestData) => {
     setSelectedRequest(req);
     setReadingTitle(`${req.service} Reading`);
-    setVideoUrl(''); // Reset
+    setVideoUrl('');
   };
 
   // 5. SUBMIT ASSIGNMENT (Single Video)
@@ -200,7 +216,7 @@ export default function AdminDashboard() {
           targetUid: selectedUser.uid,
           readingTitle,
           readingDate,
-          videoUrl, // Single URL
+          videoUrl,
           requestId: selectedRequest?.id,
         }),
       });
@@ -208,18 +224,56 @@ export default function AdminDashboard() {
       const result = await res.json();
       if (!res.ok) throw new Error('Failed to assign');
 
-      setModalMessage(`Reading assigned! Request is marked as complete.`);
+      setModalMessage(
+        result.remaining > 0
+          ? `Saved! ${result.remaining} readings remaining.`
+          : `Reading assigned! Request complete.`
+      );
       setShowSuccessModal(true);
 
-      // Cleanup
       setReadingTitle('');
       setVideoUrl('');
       setSelectedRequest(null);
     } catch (error) {
-      console.error('Assign Error:', error);
-      alert('Failed to assign reading.');
+      alert('Failed to assign.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // NEW: SEND EMAIL HANDLER
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedUser || !currentUser || !emailSubject || !emailMessage) return;
+
+    setSendingEmail(true);
+    try {
+      const token = await currentUser.getIdToken();
+      const res = await fetch('/api/admin/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          targetEmail: selectedUser.email,
+          targetName: selectedUser.firstName,
+          subject: emailSubject,
+          message: emailMessage,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to send email');
+
+      setModalMessage(`Email sent successfully to ${selectedUser.email}`);
+      setShowSuccessModal(true);
+      setShowEmailModal(false);
+      setEmailSubject('');
+      setEmailMessage('');
+    } catch (error) {
+      alert('Failed to send email.');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -278,9 +332,7 @@ export default function AdminDashboard() {
             <div className="mx-auto w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
-            <h3 className="text-xl font-serif font-bold mb-2">
-              Assignment Complete
-            </h3>
+            <h3 className="text-xl font-serif font-bold mb-2">Success</h3>
             <p className="opacity-70 text-sm mb-6">{modalMessage}</p>
             <button
               onClick={() => setShowSuccessModal(false)}
@@ -288,6 +340,54 @@ export default function AdminDashboard() {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* NEW: Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className={`relative w-full max-w-lg p-8 rounded-2xl shadow-2xl border ${current.panelBg} ${current.border}`}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-serif font-bold flex items-center gap-2">
+                <Mail className="w-5 h-5" /> Send Email
+              </h3>
+              <button onClick={() => setShowEmailModal(false)}>
+                <X className="w-5 h-5 opacity-50 hover:opacity-100" />
+              </button>
+            </div>
+            <p className="text-xs opacity-60 mb-4">To: {selectedUser?.email}</p>
+            <form onSubmit={handleSendEmail} className="space-y-4">
+              <input
+                placeholder="Subject"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+                className={`w-full border rounded-lg px-4 py-3 focus:outline-none ${current.inputBg} ${current.border}`}
+                required
+              />
+              <textarea
+                placeholder="Write your message..."
+                rows={6}
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+                className={`w-full border rounded-lg px-4 py-3 focus:outline-none ${current.inputBg} ${current.border}`}
+                required
+              />
+              <button
+                disabled={sendingEmail}
+                className={`flex items-center justify-center gap-2 w-full font-bold py-3 rounded-xl disabled:opacity-50 ${current.button}`}
+              >
+                {sendingEmail ? (
+                  'Sending...'
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" /> Send Message
+                  </>
+                )}
+              </button>
+            </form>
           </div>
         </div>
       )}
@@ -388,13 +488,19 @@ export default function AdminDashboard() {
                   </h2>
                   <p className="text-sm opacity-60">{selectedUser.email}</p>
                 </div>
-                <div className="text-right text-xs opacity-50">
-                  <div>
-                    {selectedUser.age ? `Age: ${selectedUser.age}` : ''}{' '}
-                    {selectedUser.gender ? `• ${selectedUser.gender}` : ''}
-                  </div>
-                  <div className="font-mono text-[10px] mt-1">
-                    ID: {selectedUser.uid.slice(0, 6)}...
+                <div className="flex items-end gap-4">
+                  {/* SEND EMAIL BUTTON */}
+                  <button
+                    onClick={() => setShowEmailModal(true)}
+                    className={`text-xs font-bold px-4 py-2 rounded-lg flex items-center gap-2 border border-current opacity-70 hover:opacity-100 transition-all`}
+                  >
+                    <Mail className="w-4 h-4" /> Send Email
+                  </button>
+                  <div className="text-right text-xs opacity-50">
+                    <div>
+                      {selectedUser.age ? `Age: ${selectedUser.age}` : ''}{' '}
+                      {selectedUser.gender ? `• ${selectedUser.gender}` : ''}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -449,7 +555,6 @@ export default function AdminDashboard() {
                             {new Date(req.createdAt).toLocaleDateString()}
                           </span>
                         </div>
-
                         <div className="grid md:grid-cols-2 gap-4 mt-3">
                           <div>
                             <span className="text-[10px] uppercase opacity-50 block font-bold">
@@ -473,6 +578,15 @@ export default function AdminDashboard() {
                           <div className="text-xs opacity-50">
                             Context: {req.age || 'N/A'} • {req.gender || 'N/A'}
                           </div>
+                          {(req.totalReadings || 0) > 1 && (
+                            <div
+                              className={`text-xs font-bold px-2 py-0.5 rounded ${req.status === 'completed' ? 'bg-green-500/20 text-green-500' : 'bg-blue-500/20 text-blue-400'}`}
+                            >
+                              {req.status === 'completed'
+                                ? 'Completed'
+                                : `${req.remainingReadings} readings left`}
+                            </div>
+                          )}
                         </div>
 
                         {/* ACTION BUTTON */}
@@ -527,7 +641,6 @@ export default function AdminDashboard() {
                       />
                     </div>
 
-                    {/* SINGLE VIDEO INPUT */}
                     <div>
                       <label className="block text-xs uppercase tracking-widest opacity-60 mb-2">
                         YouTube Link
