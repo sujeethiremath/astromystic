@@ -7,7 +7,8 @@ import { User } from 'firebase/auth';
 // =========================================================
 // 1. REAL IMPORTS (Uncomment these in your local Next.js project)
 // =========================================================
- import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { trackEvent } from '../lib/mixpanel'; // Import Mixpanel
 
 interface NavbarProps {
   user: User | null;
@@ -36,6 +37,13 @@ export default function Navbar({
 
   const handleNavClick = (id: string) => {
     setIsMenuOpen(false);
+    
+    // TRACK EVENT: Navigation
+    trackEvent('Navigation Clicked', {
+      target_section: id,
+      current_path: pathname,
+      location: 'Navbar'
+    });
     
     if (id === 'about') {
       router.push('/about');
@@ -112,7 +120,15 @@ export default function Navbar({
             ))}
             
             <button 
-              onClick={toggleTheme}
+              onClick={() => {
+                // TRACK EVENT: Theme Toggle
+                trackEvent('Theme Toggled', {
+                  previous_theme: theme,
+                  new_theme: theme === 'sun' ? 'moon' : 'sun',
+                  location: 'Navbar'
+                });
+                toggleTheme();
+              }}
               className={`p-2 rounded-full transition-all duration-500 transform hover:scale-110 ${theme === 'sun' ? 'bg-amber-100 text-amber-600' : 'bg-slate-800 text-indigo-300'}`}
               aria-label="Toggle theme"
             >
@@ -124,16 +140,36 @@ export default function Navbar({
                 {user ? (
                   <div className="flex items-center gap-4 pl-4 border-l border-current border-opacity-20">
                     <button 
-                      onClick={() => router.push(dashboardPath)} 
+                      onClick={() => {
+                        // TRACK EVENT: Dashboard Entry
+                        trackEvent('Dashboard Navigation', {
+                          source: 'Navbar Desktop',
+                          role: dashboardPath.replace('/', '')
+                        });
+                        router.push(dashboardPath);
+                      }}
                       className="text-sm font-semibold hover:opacity-80 flex items-center gap-2"
                     >
                        <LayoutDashboard className="w-4 h-4" /> Dashboard
                     </button>
-                    <button onClick={onSignOut} className="text-sm hover:underline opacity-60">Sign Out</button>
+                    <button 
+                      onClick={() => {
+                        // TRACK EVENT: Sign Out
+                        trackEvent('User Signed Out', { location: 'Navbar Desktop' });
+                        onSignOut();
+                      }} 
+                      className="text-sm hover:underline opacity-60"
+                    >
+                      Sign Out
+                    </button>
                   </div>
                 ) : (
                   <button 
-                    onClick={onOpenAuth}
+                    onClick={() => {
+                      // TRACK EVENT: Auth Start
+                      trackEvent('Auth Modal Opened', { source: 'Navbar Desktop' });
+                      onOpenAuth();
+                    }}
                     className={`px-5 py-2 rounded-full text-sm font-bold tracking-wide transition-all shadow-md hover:shadow-lg ${theme === 'sun' ? 'bg-amber-200 text-amber-900 hover:bg-amber-300' : 'bg-indigo-600 text-indigo-100 hover:bg-indigo-500'}`}
                   >
                     Sign In
@@ -172,7 +208,14 @@ export default function Navbar({
              <div className="flex items-center justify-between bg-current bg-opacity-5 p-4 rounded-xl">
                 <span className="text-sm font-bold tracking-wider opacity-80">THEME</span>
                 <button 
-                  onClick={toggleTheme}
+                  onClick={() => {
+                    trackEvent('Theme Toggled', {
+                      previous_theme: theme,
+                      new_theme: theme === 'sun' ? 'moon' : 'sun',
+                      location: 'Mobile Menu'
+                    });
+                    toggleTheme();
+                  }}
                   className={`p-2 rounded-full ${theme === 'sun' ? 'bg-amber-100 text-amber-600' : 'bg-slate-800 text-indigo-300'}`}
                 >
                   {theme === 'sun' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -182,16 +225,32 @@ export default function Navbar({
              {user ? (
                <div className="bg-current bg-opacity-5 p-4 rounded-xl space-y-4">
                 <div className="text-sm opacity-60">Signed in as <br/><span className="font-bold text-current opacity-100">{user.email}</span></div>
-                <button onClick={() => router.push(dashboardPath)} className="flex items-center gap-3 w-full py-3 font-bold border-t border-current border-opacity-10">
+                <button 
+                  onClick={() => {
+                    trackEvent('Dashboard Navigation', { source: 'Mobile Menu', role: dashboardPath.replace('/', '') });
+                    router.push(dashboardPath);
+                  }}
+                  className="flex items-center gap-3 w-full py-3 font-bold border-t border-current border-opacity-10"
+                >
                    <LayoutDashboard className="w-5 h-5" /> Go to Dashboard
                 </button>
-                <button onClick={onSignOut} className="flex items-center gap-3 w-full py-3 text-red-400 font-bold">
+                <button 
+                  onClick={() => {
+                    trackEvent('User Signed Out', { location: 'Mobile Menu' });
+                    onSignOut();
+                  }}
+                  className="flex items-center gap-3 w-full py-3 text-red-400 font-bold"
+                >
                     <LogOut className="w-5 h-5" /> Sign Out
                 </button>
                </div>
              ) : (
                <button 
-                onClick={() => { onOpenAuth(); setIsMenuOpen(false); }} 
+                onClick={() => { 
+                  trackEvent('Auth Modal Opened', { source: 'Mobile Menu' });
+                  onOpenAuth(); 
+                  setIsMenuOpen(false); 
+                }} 
                 className={`w-full py-4 rounded-xl text-lg font-bold ${theme === 'sun' ? 'bg-amber-600 text-white' : 'bg-indigo-600 text-white'}`}
                >
                   Sign In / Register

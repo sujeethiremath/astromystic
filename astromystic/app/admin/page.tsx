@@ -1,20 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-// ADDED: Trash2 to the imports
 import { Shield, Users, Video, Plus, Save, Check, Search, Loader2, LogOut, Sun, Moon, CheckCircle, X, MessageSquare, Clock, Inbox, History, User as UserIcon, Trash2 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
-// =========================================================
-// 1. REAL IMPORTS (Uncomment these in your local Next.js project)
-// =========================================================
 import { useRouter } from 'next/navigation';
 import { useTheme } from '../../context/ThemeContext'; 
 import { auth, db } from '@/lib/firebase'; 
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, getDocs, addDoc, query, orderBy, doc, getDoc, onSnapshot, where, updateDoc } from 'firebase/firestore';
 import StarField from '../../components/StarField'; 
-
+import { trackEvent } from '../../lib/mixpanel'; // Import Mixpanel
 
 
 // Types
@@ -61,8 +57,8 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
   const [requests, setRequests] = useState<RequestData[]>([]); 
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
-
-  // Assignment Form State (Multiple Videos)
+  
+  // Assignment Form State
   const [readingTitle, setReadingTitle] = useState('');
   const [readingDate, setReadingDate] = useState(new Date().toISOString().split('T')[0]);
   const [videoList, setVideoList] = useState<VideoItem[]>([{ title: 'Part 1', url: '' }]);
@@ -74,16 +70,18 @@ export default function AdminDashboard() {
 
   // 1. INITIAL AUTH CHECK
   useEffect(() => {
+    // TRACK EVENT: Admin Page Loaded
+    trackEvent('Admin Dashboard Viewed');
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) return router.push('/');
       setCurrentUser(user);
       
-      // In prod, strictly rely on API/Rules. For UI smoothness:
       const allowedEmails = ['sujeetshiremath@gmail.com', 'hiremath09@gmail.com'];
       if (user.email && allowedEmails.includes(user.email)) {
-         await fetchUsers(user);
+         fetchUsers(user);
       } else {
-         await fetchUsers(user); // API will reject if invalid
+         fetchUsers(user);
       }
       setLoading(false);
     });
@@ -119,6 +117,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!selectedUser) {
       setRequests([]);
+      setSelectedRequest(null);
       return;
     }
 
@@ -133,9 +132,13 @@ export default function AdminDashboard() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const reqs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RequestData));
       setRequests(reqs);
+      
+      // Deselect request if it moves to history (vanishes from open)
+      if (selectedRequest && !reqs.find(r => r.id === selectedRequest.id)) {
+         setSelectedRequest(null);
+      }
     }, (err) => {
-      // Ignore missing index error on first run, console provides link
-      if (err.code !== 'permission-denied') console.warn("Snapshot error:", err.message);
+      if (err.code !== 'permission-denied') console.warn("Snapshot error (Check Indexes):", err.message);
     });
 
     return () => unsubscribe();
@@ -143,9 +146,14 @@ export default function AdminDashboard() {
 
   // 4. HANDLE ASSIGNMENT WORKFLOW
   const initAssignment = (req: RequestData) => {
+    // TRACK EVENT: Admin started fulfilling a request
+    trackEvent('Admin Started Assignment', {
+      request_service: req.service,
+      target_user: selectedUser?.email
+    });
+
     setSelectedRequest(req);
     
-    // Smart Title Generation based on Package progress
     const total = req.totalReadings || 1;
     const remaining = req.remainingReadings ?? 1;
     const currentNumber = (total - remaining) + 1;
@@ -156,28 +164,19 @@ export default function AdminDashboard() {
        setReadingTitle(`${req.service} Reading`);
     }
     
-    // Reset video list
     setVideoList([{ title: 'Part 1', url: '' }]);
   };
 
-  // Video List Management
-  const updateVideoItem = (index: number, field: 'title' | 'url', value: string) => {
-    const newList = [...videoList];
-    newList[index][field] = value;
-    setVideoList(newList);
+  // Video List Helpers
+  const updateVideoItem = (index: number, field: keyof VideoItem, value: string) => {
+    const newVideos = [...videoList];
+    newVideos[index][field] = value;
+    setVideoList(newVideos);
   };
+  const addVideoRow = () => setVideoList([...videoList, { title: `Part ${videoList.length + 1}`, url: '' }]);
+  const removeVideoRow = (index: number) => setVideoList(videoList.filter((_, i) => i !== index));
 
-  const addVideoRow = () => {
-    setVideoList([...videoList, { title: `Part ${videoList.length + 1}`, url: '' }]);
-  };
-
-  const removeVideoRow = (index: number) => {
-    if (videoList.length > 1) {
-      setVideoList(videoList.filter((_, i) => i !== index));
-    }
-  };
-
-  // 5. SUBMIT ASSIGNMENT (Calls API)
+  // 5. SUBMIT ASSIGNMENT
   const handleCompleteAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser || !currentUser || !readingTitle) return;
@@ -195,30 +194,39 @@ export default function AdminDashboard() {
           targetUid: selectedUser.uid,
           readingTitle,
           readingDate,
-          videos: videoList.filter(v => v.url), // Clean up empty rows
-          requestId: selectedRequest?.id // Optional: links to request
+          videos: videoList.filter(v => v.url),
+          requestId: selectedRequest?.id 
         })
       });
 
-      if (!res.ok) throw new Error('Failed to assign');
-      
       const result = await res.json();
+      if (!res.ok) throw new Error('Failed to assign');
+
+      // TRACK EVENT: Success
+      trackEvent('Admin Assigned Reading', {
+        target_user: selectedUser.email,
+        title: readingTitle,
+        video_count: videoList.length,
+        remaining: result.remaining
+      });
 
       if (result.remaining > 0) {
         setModalMessage(`Saved! ${result.remaining} readings remaining in this package.`);
       } else {
-        setModalMessage(`Reading assigned! Request marked as fully complete.`);
+        setModalMessage(`Reading assigned! Request is fully complete and moved to History.`);
       }
 
       setShowSuccessModal(true);
       
-      // Reset Form
+      // Cleanup
       setReadingTitle('');
       setVideoList([{ title: 'Part 1', url: '' }]);
       setSelectedRequest(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Assign Error:", error);
-      alert("Failed to assign reading. Check permissions.");
+      alert("Failed to assign reading.");
+      // TRACK EVENT: Failure
+      trackEvent('Admin Assignment Failed', { error: error.message });
     } finally {
       setSaving(false);
     }
@@ -232,7 +240,7 @@ export default function AdminDashboard() {
       button: 'bg-amber-600 hover:bg-amber-700 text-white',
       secondaryButton: 'text-amber-600 hover:bg-amber-100',
       listHover: 'hover:bg-amber-100', listActive: 'bg-amber-200 border-amber-400',
-      highlightBox: 'bg-amber-50 border-amber-200'
+      badge: 'bg-amber-200 text-amber-800'
     },
     moon: {
       bg: 'bg-slate-950', text: 'text-slate-100', panelBg: 'bg-slate-900', border: 'border-slate-800',
@@ -240,12 +248,12 @@ export default function AdminDashboard() {
       button: 'bg-indigo-600 hover:bg-indigo-500 text-white',
       secondaryButton: 'text-slate-400 hover:text-white hover:bg-slate-800',
       listHover: 'hover:bg-slate-800', listActive: 'bg-indigo-900/50 border-indigo-500/50',
-      highlightBox: 'bg-indigo-900/20 border-indigo-500/30'
+      badge: 'bg-indigo-900 text-indigo-200'
     }
   };
   const current = styles[theme];
 
-  if (loading) return <div className={`min-h-screen flex items-center justify-center gap-3 ${current.bg} ${current.text}`}><Loader2 className="w-6 h-6 animate-spin" /> Accessing Mainframe...</div>;
+  if (loading) return <div className={`min-h-screen flex items-center justify-center gap-3 ${current.bg} ${current.text}`}><Loader2 className="w-6 h-6 animate-spin" /> Connecting...</div>;
 
   return (
     <div className={`min-h-screen font-sans p-6 md:p-12 transition-colors duration-500 ${current.bg} ${current.text}`}>
@@ -272,7 +280,7 @@ export default function AdminDashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <button onClick={toggleTheme} className={`p-2 rounded-full transition-all hover:bg-current hover:bg-opacity-10`}>{theme === 'sun' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}</button>
+          <button onClick={toggleTheme} className={`p-2 rounded-full hover:bg-current hover:bg-opacity-10`}>{theme === 'sun' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}</button>
           <button onClick={() => { signOut(auth); router.push('/'); }} className={`flex items-center gap-2 text-sm px-4 py-2 rounded-lg transition-colors ${current.secondaryButton}`}><LogOut className="w-4 h-4" /> Sign Out</button>
         </div>
       </header>
@@ -288,7 +296,16 @@ export default function AdminDashboard() {
           </div>
           <div className="overflow-y-auto flex-1 p-2 space-y-1 custom-scrollbar">
             {users.map((user) => (
-              <button key={user.uid} onClick={() => { setSelectedUser(user); setSelectedRequest(null); }} className={`w-full text-left p-3 rounded-lg transition-all border border-transparent group ${selectedUser?.uid === user.uid ? current.listActive : current.listHover}`}>
+              <button 
+                key={user.uid} 
+                onClick={() => { 
+                  // TRACK EVENT: User Selected
+                  trackEvent('Admin Selected User', { email: user.email });
+                  setSelectedUser(user); 
+                  setSelectedRequest(null); 
+                }} 
+                className={`w-full text-left p-3 rounded-lg transition-all border border-transparent group ${selectedUser?.uid === user.uid ? current.listActive : current.listHover}`}
+              >
                 <div className="flex justify-between items-start">
                   <div className="font-bold text-sm truncate">
                     {user.firstName ? `${user.firstName} ${user.lastName}` : (user.displayName || user.email)}
@@ -306,17 +323,18 @@ export default function AdminDashboard() {
         </div>
 
         {/* RIGHT COLUMN: WORKSPACE */}
-        <div className="lg:col-span-8 flex flex-col gap-6 overflow-y-auto">
+        <div className="lg:col-span-8 flex flex-col gap-6 overflow-y-auto pb-10">
           {selectedUser ? (
             <>
-              {/* USER HEADER */}
+              {/* USER INFO */}
               <div className={`flex justify-between items-end pb-4 border-b ${current.border}`}>
                  <div>
-                   <h2 className="text-2xl font-serif font-bold">{selectedUser.firstName} {selectedUser.lastName}</h2>
+                   <h2 className="text-2xl font-serif font-bold">{selectedUser.firstName || 'User'} {selectedUser.lastName}</h2>
                    <p className="text-sm opacity-60">{selectedUser.email}</p>
                  </div>
                  <div className="text-right text-xs opacity-50">
                     <div>{selectedUser.age ? `Age: ${selectedUser.age}` : ''} {selectedUser.gender ? `• ${selectedUser.gender}` : ''}</div>
+                    <div className="font-mono text-[10px] mt-1">ID: {selectedUser.uid.slice(0,6)}...</div>
                  </div>
               </div>
 
@@ -326,42 +344,40 @@ export default function AdminDashboard() {
                 <button onClick={() => setActiveTab('history')} className={`pb-2 text-sm font-bold flex items-center gap-2 border-b-2 transition-all ${activeTab === 'history' ? 'border-current opacity-100' : 'border-transparent opacity-40 hover:opacity-70'}`}><History className="w-4 h-4"/> History</button>
               </div>
 
-              {/* REQUESTS LIST */}
+              {/* REQUEST LIST */}
               <div className={`border rounded-xl p-6 ${current.panelBg} ${current.border}`}>
-                 <h3 className="font-bold mb-4 text-sm uppercase tracking-wider opacity-70 flex items-center gap-2"><MessageSquare className="w-4 h-4"/> {activeTab} Requests ({requests.length})</h3>
+                 <h3 className="font-bold mb-4 text-sm uppercase tracking-wider opacity-70 flex items-center gap-2"><MessageSquare className="w-4 h-4"/> {activeTab === 'open' ? 'Pending Actions' : 'Completed History'} ({requests.length})</h3>
                  
                  {requests.length === 0 ? (
-                   <p className="text-sm opacity-50 italic">No {activeTab} requests found.</p>
+                   <p className="text-sm opacity-50 italic">No {activeTab} requests.</p>
                  ) : (
-                   <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                   <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                      {requests.map(req => (
-                       <div key={req.id} className={`p-4 rounded-lg border text-sm ${theme === 'sun' ? 'bg-amber-50 border-amber-200' : 'bg-slate-950 border-slate-800'}`}>
+                       <div key={req.id} className={`p-4 rounded-lg border text-sm transition-all ${selectedRequest?.id === req.id ? 'ring-2 ring-indigo-500' : ''} ${theme === 'sun' ? 'bg-amber-50 border-amber-200' : 'bg-slate-950 border-slate-800'}`}>
                           <div className="flex justify-between mb-2 items-center">
-                             <span className={`font-bold px-2 py-1 rounded text-xs ${theme === 'sun' ? 'bg-amber-200 text-amber-800' : 'bg-indigo-900 text-indigo-200'}`}>{req.service}</span>
+                             <span className={`font-bold px-2 py-1 rounded text-xs ${current.badge}`}>{req.service}</span>
                              <span className="text-xs opacity-50 flex items-center gap-1"><Clock className="w-3 h-3"/> {new Date(req.createdAt).toLocaleDateString()}</span>
                           </div>
-                          <div className="grid md:grid-cols-2 gap-4 mt-2">
-                            <div><span className="text-[10px] uppercase opacity-50 block font-bold">Situation</span><p className="opacity-90 leading-relaxed">{req.situation}</p></div>
-                            <div><span className="text-[10px] uppercase opacity-50 block font-bold">Question</span><p className="opacity-90 leading-relaxed">{req.question}</p></div>
-                          </div>
-                          {/* Context Footer */}
-                          {(req.age || req.gender) && (
-                             <div className="mt-3 pt-2 border-t border-current border-opacity-10 text-xs opacity-50">Context: Age {req.age} • {req.gender}</div>
-                          )}
                           
-                          {/* Package Progress Badge */}
-                          {(req.totalReadings || 0) > 1 && (
-                             <div className="mt-2 text-right">
-                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${req.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}`}>
-                                 {req.status === 'completed' ? 'All Videos Sent' : `${req.remainingReadings} / ${req.totalReadings} remaining`}
-                               </span>
-                             </div>
-                          )}
+                          <div className="grid md:grid-cols-2 gap-4 mt-3">
+                            <div><span className="text-[10px] uppercase opacity-50 block font-bold">Situation</span><p className="opacity-90 leading-relaxed whitespace-pre-wrap">{req.situation}</p></div>
+                            <div><span className="text-[10px] uppercase opacity-50 block font-bold">Question</span><p className="opacity-90 leading-relaxed whitespace-pre-wrap">{req.question}</p></div>
+                          </div>
+                          
+                          <div className="mt-3 pt-2 border-t border-current border-opacity-10 flex justify-between items-center">
+                             <div className="text-xs opacity-50">Context: {req.age || 'N/A'} • {req.gender || 'N/A'}</div>
+                             {/* PACKAGE COUNTER */}
+                             {(req.totalReadings || 0) > 1 && (
+                               <div className={`text-xs font-bold px-2 py-0.5 rounded ${req.status === 'completed' ? 'bg-green-500/20 text-green-500' : 'bg-blue-500/20 text-blue-400'}`}>
+                                 {req.status === 'completed' ? 'Completed' : `${req.remainingReadings} readings left`}
+                               </div>
+                             )}
+                          </div>
 
-                          {/* Fulfill Button (Only for Open Tab) */}
+                          {/* ACTION BUTTON */}
                           {activeTab === 'open' && selectedRequest?.id !== req.id && (
-                             <button onClick={() => initAssignment(req)} className={`mt-3 text-xs font-bold px-3 py-1.5 rounded-lg w-full md:w-auto ${current.button}`}>
-                               {(req.remainingReadings || 0) > 1 ? 'Add Video to Package' : 'Fulfill Request'}
+                             <button onClick={() => initAssignment(req)} className={`mt-3 w-full md:w-auto text-xs font-bold px-4 py-2 rounded-lg ${current.button}`}>
+                               Fulfill Request
                              </button>
                           )}
                        </div>
@@ -370,54 +386,50 @@ export default function AdminDashboard() {
                  )}
               </div>
 
-              {/* ASSIGNMENT WORKSPACE */}
-              <div className={`border rounded-xl p-8 ${current.panelBg} ${current.border} animate-in slide-in-from-bottom-2`}>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-serif font-bold">
-                    {selectedRequest ? `Fulfilling: ${selectedRequest.service}` : 'Assign New Reading'}
-                  </h2>
-                  {selectedRequest && <button onClick={() => {setSelectedRequest(null); setReadingTitle('');}} className="text-xs opacity-50 hover:opacity-100">Cancel Selection</button>}
+              {/* ASSIGNMENT FORM (Only visible if Request Selected) */}
+              {selectedRequest && (
+                <div className={`border rounded-xl p-8 ${current.panelBg} ${current.border} animate-in slide-in-from-bottom-4 shadow-2xl`}>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-serif font-bold">
+                      {selectedRequest ? `Fulfilling: ${selectedRequest.service}` : 'Assign New Reading'}
+                    </h2>
+                    <button onClick={() => setSelectedRequest(null)} className="text-xs opacity-50 hover:opacity-100">Cancel</button>
+                  </div>
+
+                  <form onSubmit={handleCompleteAssignment} className="space-y-6">
+                    <div>
+                      <label className="block text-xs uppercase tracking-widest opacity-60 mb-2">Package Title</label>
+                      <input type="text" value={readingTitle} onChange={(e) => setReadingTitle(e.target.value)} className={`w-full border rounded-lg px-4 py-3 focus:outline-none ${current.inputBg} ${current.border}`} required />
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="block text-xs uppercase tracking-widest opacity-60">Videos</label>
+                      {videoList.map((video, index) => (
+                        <div key={index} className="flex gap-2 items-start">
+                           <div className="flex-1 space-y-2">
+                              <input placeholder="Title (e.g. Part 1)" value={video.title} onChange={(e) => updateVideoItem(index, 'title', e.target.value)} className={`w-full border rounded-lg px-3 py-2 text-sm ${current.inputBg} ${current.border}`} required />
+                              <div className="relative"><Video className="absolute left-3 top-2.5 w-4 h-4 opacity-40" /><input placeholder="YouTube URL" value={video.url} onChange={(e) => updateVideoItem(index, 'url', e.target.value)} className={`w-full border rounded-lg pl-9 pr-3 py-2 text-sm ${current.inputBg} ${current.border}`} required /></div>
+                           </div>
+                           {videoList.length > 1 && <button type="button" onClick={() => removeVideoRow(index)} className="p-2 mt-1 text-red-400 hover:bg-red-400/10 rounded-lg"><Trash2 className="w-4 h-4"/></button>}
+                        </div>
+                      ))}
+                      <button type="button" onClick={addVideoRow} className={`text-xs font-bold flex items-center gap-1 mt-2 ${current.secondaryButton}`}><Plus className="w-3 h-3"/> Add Video</button>
+                    </div>
+
+                    <div className="pt-4 border-t border-current border-opacity-10">
+                      <button disabled={saving} className={`flex items-center justify-center gap-2 w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 ${current.button}`}>
+                        {saving ? 'Uploading...' : <><Save className="w-4 h-4" /> Complete Assignment</>}
+                      </button>
+                    </div>
+                  </form>
                 </div>
-
-                <form onSubmit={handleCompleteAssignment} className="space-y-6">
-                  <div>
-                    <label className="block text-xs uppercase tracking-widest opacity-60 mb-2">Package Title</label>
-                    <input type="text" value={readingTitle} onChange={(e) => setReadingTitle(e.target.value)} className={`w-full border rounded-lg px-4 py-3 focus:outline-none ${current.inputBg} ${current.border}`} required />
-                  </div>
-
-                  {/* MULTI-VIDEO INPUTS */}
-                  <div className="space-y-3">
-                    <label className="block text-xs uppercase tracking-widest opacity-60">Videos</label>
-                    {videoList.map((video, index) => (
-                      <div key={index} className="flex gap-2 items-start">
-                         <div className="flex-1 space-y-2">
-                            <input placeholder="Title (e.g. Part 1)" value={video.title} onChange={(e) => updateVideoItem(index, 'title', e.target.value)} className={`w-full border rounded-lg px-3 py-2 text-sm ${current.inputBg} ${current.border}`} required />
-                            <div className="relative">
-                              <Video className="absolute left-3 top-2.5 w-4 h-4 opacity-40" />
-                              <input placeholder="YouTube URL" value={video.url} onChange={(e) => updateVideoItem(index, 'url', e.target.value)} className={`w-full border rounded-lg pl-9 pr-3 py-2 text-sm ${current.inputBg} ${current.border}`} required />
-                            </div>
-                         </div>
-                         {videoList.length > 1 && (
-                           <button type="button" onClick={() => removeVideoRow(index)} className="p-2 mt-1 text-red-400 hover:bg-red-400/10 rounded-lg"><Trash2 className="w-4 h-4"/></button>
-                         )}
-                      </div>
-                    ))}
-                    <button type="button" onClick={addVideoRow} className={`text-xs font-bold flex items-center gap-1 mt-2 ${current.secondaryButton}`}><Plus className="w-3 h-3"/> Add Another Video</button>
-                  </div>
-
-                  <div className="pt-4 border-t border-current border-opacity-10">
-                    <button disabled={saving} className={`flex items-center justify-center gap-2 w-full font-bold py-4 rounded-xl transition-all disabled:opacity-50 ${current.button}`}>
-                      {saving ? 'Uploading...' : <><Save className="w-4 h-4" /> Complete Assignment</>}
-                    </button>
-                  </div>
-                </form>
-              </div>
+              )}
             </>
           ) : (
-            <div className={`h-full flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 text-center opacity-60 ${current.border}`}>
-              <Search className="w-16 h-16 mb-4 opacity-30" />
-              <h3 className="font-bold text-lg">No Request Selected</h3>
-              <p className="text-sm opacity-70 max-w-xs mt-2">Select an "Open Request" from the middle column to start assigning videos.</p>
+            <div className={`h-full flex flex-col items-center justify-center border-2 border-dashed rounded-xl p-8 text-center opacity-50 ${current.border}`}>
+              <Search className="w-16 h-16 mb-4 opacity-50" />
+              <h3 className="font-bold text-lg">Ready for Mission</h3>
+              <p className="text-sm max-w-xs mt-2">Select a traveler from the list to view their requests and assign readings.</p>
             </div>
           )}
         </div>

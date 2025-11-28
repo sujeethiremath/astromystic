@@ -4,7 +4,7 @@ import { ThemeProvider } from "../context/ThemeContext";
 
 // --- CONFIGURATION ---
 // Updated to your live Vercel URL
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://practicalspirituality.vercel.app"; 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://practicalloveastrology.com"; 
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     default: "Practical Spirituality | Explore Your Cosmic Potential",
     template: "%s | Practical Spirituality"
   },
-  description: "Certified evolutionary astrology readings. Discover your natal chart, solar return, and synastry insights with a professional guide.",
+  description: "Evolutionary astrology readings. Discover your natal chart, solar return, and synastry insights with a professional guide.",
   keywords: ["Astrology", "Natal Chart", "Horoscope", "Zodiac", "Spirituality", "Readings"],
   authors: [{ name: "Gulnara Ilyasova" }],
   creator: "Practical Spirituality",

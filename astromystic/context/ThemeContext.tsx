@@ -1,23 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc } from 'firebase/firestore';
-
-// Inline Firebase to ensure it works in preview without external file dependency issues
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
 
 type Theme = 'sun' | 'moon';
 
@@ -34,15 +20,20 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const [theme, setTheme] = useState<Theme>('sun'); // Changed default to sun
+  // CHANGED: Default state is now 'sun'
+  const [theme, setTheme] = useState<Theme>('sun');
   const [mounted, setMounted] = useState(false);
 
+  // 1. Initialize from LocalStorage immediately
   useEffect(() => {
     const saved = localStorage.getItem('astromystic-theme') as Theme;
-    if (saved) setTheme(saved);
+    if (saved) {
+      setTheme(saved);
+    }
     setMounted(true);
   }, []);
 
+  // 2. Sync with Firebase Auth
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -61,6 +52,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
+  // 3. Handle Toggle
   const toggleTheme = async () => {
     const newTheme = theme === 'sun' ? 'moon' : 'sun';
     setTheme(newTheme);
@@ -75,8 +67,11 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  // Prevent flash of wrong theme (matches sun background)
-  if (!mounted) return <div className="min-h-screen bg-amber-50" />; 
+  // Prevent hydration mismatch or flash
+  if (!mounted) {
+    // CHANGED: Loading background is now Amber (Sun) instead of Slate (Moon) to prevent flashing
+    return <div className="min-h-screen bg-amber-50" />; 
+  }
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, loading: !mounted }}>

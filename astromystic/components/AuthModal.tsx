@@ -4,10 +4,7 @@ import React, { useState } from 'react';
 import { X, Mail, Lock, ArrowLeft, User as UserIcon } from 'lucide-react';
 import { User as FirebaseUser } from 'firebase/auth';
 
-// =========================================================
-// 1. REAL IMPORTS (Uncomment these in your local Next.js project)
-// =========================================================
-/*
+
 import { auth, googleProvider } from '../lib/firebase';
 import { 
   signInWithPopup, 
@@ -17,36 +14,8 @@ import {
   sendPasswordResetEmail,
   signOut
 } from 'firebase/auth';
-*/
+import { trackEvent } from '../lib/mixpanel';
 
-// =========================================================
-// 2. PREVIEW MOCKS (Delete these in your local Next.js project)
-// =========================================================
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { 
-  getAuth, 
-  GoogleAuthProvider, 
-  signInWithPopup, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  signOut
-} from 'firebase/auth';
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-};
-
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const googleProvider = new GoogleAuthProvider();
-// =========================================================
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -86,6 +55,11 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
   const current = styles[theme];
 
   const switchMode = (newMode: AuthMode) => {
+    // TRACK EVENT: Mode Switch
+    trackEvent('Auth Mode Switched', {
+      from: mode,
+      to: newMode
+    });
     setMode(newMode); setError(''); setSuccessMsg('');
   };
 
@@ -110,21 +84,40 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
 
   const handleGoogleSignIn = async () => {
     setError('');
+    
+    // TRACK EVENT: Google Sign In Attempt
+    trackEvent('Auth Attempt', { method: 'Google' });
+
     try {
       const result = await signInWithPopup(auth, googleProvider);
       await syncUserWithBackend(result.user);
+      
+      // TRACK EVENT: Google Success
+      trackEvent('Auth Success', { method: 'Google', userId: result.user.uid });
+      
       onClose(); 
-    } catch (err: any) { setError(err.message); }
+    } catch (err: any) { 
+      setError(err.message); 
+      // TRACK EVENT: Google Failure
+      trackEvent('Auth Failure', { method: 'Google', error: err.message });
+    }
   };
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return setError("Please enter your email.");
     setLoading(true); setError(''); setSuccessMsg('');
+    
+    // TRACK EVENT: Password Reset Requested
+    trackEvent('Password Reset Requested');
+
     try {
       await sendPasswordResetEmail(auth, email);
       setSuccessMsg("Password reset email sent!");
-    } catch (err: any) { setError(err.message); } 
+    } catch (err: any) { 
+      setError(err.message); 
+      trackEvent('Password Reset Failed', { error: err.message });
+    } 
     finally { setLoading(false); }
   };
 
@@ -132,15 +125,24 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
     e.preventDefault();
     setLoading(true); setError(''); setSuccessMsg('');
     
+    const method = mode === 'login' ? 'Email Login' : 'Email Signup';
+    // TRACK EVENT: Email Auth Attempt
+    trackEvent('Auth Attempt', { method });
+    
     try {
       if (mode === 'login') {
         const result = await signInWithEmailAndPassword(auth, email, password);
         if (!result.user.emailVerified) {
           await signOut(auth);
           setError("Email not verified. Please check your inbox.");
+          trackEvent('Auth Failure', { method, error: 'Email not verified' });
           return;
         }
         await syncUserWithBackend(result.user);
+        
+        // TRACK EVENT: Login Success
+        trackEvent('Auth Success', { method, userId: result.user.uid });
+        
         onClose();
       } else {
         // Signup Logic
@@ -153,18 +155,24 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
         // Sync immediately so names are saved
         await syncUserWithBackend(result.user);
         
+        // TRACK EVENT: Signup Success
+        trackEvent('Auth Success', { method, userId: result.user.uid });
+
         setMode('login');
         setSuccessMsg(`Verification sent to ${email}. Please verify before logging in.`);
       }
     } catch (err: any) { 
-      if (err.code === 'auth/email-already-in-use') setError("Email already registered.");
-      else setError(err.message); 
+      let msg = err.message;
+      if (err.code === 'auth/email-already-in-use') msg = "Email already registered.";
+      setError(msg);
+      
+      // TRACK EVENT: Auth Failure
+      trackEvent('Auth Failure', { method, error: msg });
     } finally { setLoading(false); }
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      {/* UPDATED: Added max-h-[90vh] and overflow-y-auto for mobile scrolling */}
       <div className={`relative w-full max-w-md p-8 rounded-2xl shadow-2xl ${current.bg} ${current.text} border ${current.border} max-h-[90vh] overflow-y-auto`}>
         <button onClick={onClose} className="absolute top-4 right-4 opacity-50 hover:opacity-100"><X className="w-6 h-6" /></button>
         

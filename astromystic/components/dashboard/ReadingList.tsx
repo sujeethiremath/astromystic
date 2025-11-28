@@ -3,12 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import { Play, Calendar, Video, Star, X, Loader2 } from 'lucide-react';
 
-// =========================================================
-// 1. REAL IMPORTS (Uncomment these in your local Next.js project)
-// =========================================================
+
 import { auth, db } from '../../lib/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { trackEvent } from '../../lib/mixpanel';
 
 
 
@@ -23,19 +22,23 @@ export default function ReadingsList({ currentStyles, theme, onBrowse }: Reading
   const [loading, setLoading] = useState(true);
   const [activeVideo, setActiveVideo] = useState<string | null>(null);
 
-  // FIXED: Proper cleanup of Firestore Listeners
+  // 1. Fetch Real Readings & Track View
   useEffect(() => {
     let unsubscribeSnapshot: (() => void) | undefined;
 
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      // 1. Always clean up the previous listener first
       if (unsubscribeSnapshot) {
         unsubscribeSnapshot();
         unsubscribeSnapshot = undefined;
       }
 
       if (user) {
-        // 2. Set up new listener only if user exists
+        // TRACK EVENT: User viewed their library
+        trackEvent('Readings Library Viewed', {
+          userId: user.uid,
+          email: user.email
+        });
+
         const q = query(
           collection(db, 'users', user.uid, 'readings'),
           orderBy('createdAt', 'desc')
@@ -49,19 +52,16 @@ export default function ReadingsList({ currentStyles, theme, onBrowse }: Reading
           setReadings(fetchedData);
           setLoading(false);
         }, (error) => {
-          // Quietly ignore permission errors during sign-out
           if (error.code === 'permission-denied') return;
           console.error("Error fetching readings:", error);
           setLoading(false);
         });
       } else {
-        // 3. Clear data if logged out
         setReadings([]);
         setLoading(false);
       }
     });
 
-    // Cleanup when component unmounts
     return () => {
       unsubscribeAuth();
       if (unsubscribeSnapshot) unsubscribeSnapshot();
@@ -75,12 +75,19 @@ export default function ReadingsList({ currentStyles, theme, onBrowse }: Reading
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}?autoplay=1` : null;
   };
 
-  const handleWatch = (url: string) => {
-    const embedUrl = getYouTubeEmbedUrl(url);
+  const handleWatch = (reading: any) => {
+    // TRACK EVENT: Video Started
+    trackEvent('Reading Video Started', {
+      video_title: reading.title,
+      video_date: reading.date,
+      video_url: reading.videoUrl
+    });
+
+    const embedUrl = getYouTubeEmbedUrl(reading.videoUrl);
     if (embedUrl) {
       setActiveVideo(embedUrl);
     } else {
-      window.open(url, '_blank');
+      window.open(reading.videoUrl, '_blank');
     }
   };
 
@@ -112,7 +119,7 @@ export default function ReadingsList({ currentStyles, theme, onBrowse }: Reading
         {readings.map((reading) => (
           <div key={reading.id} className={`group rounded-xl overflow-hidden border transition-all hover:shadow-xl ${currentStyles.panelBg} ${currentStyles.border}`}>
             <div 
-              onClick={() => handleWatch(reading.videoUrl)}
+              onClick={() => handleWatch(reading)}
               className="relative aspect-video bg-black/20 group-hover:opacity-90 transition-opacity cursor-pointer"
             >
               <div className="absolute inset-0 flex items-center justify-center">
@@ -133,7 +140,7 @@ export default function ReadingsList({ currentStyles, theme, onBrowse }: Reading
                 <span>{reading.date}</span>
               </div>
               <button 
-                onClick={() => handleWatch(reading.videoUrl)}
+                onClick={() => handleWatch(reading)}
                 className={`block w-full py-2 text-center rounded-lg text-sm font-bold border border-current border-opacity-20 hover:bg-current hover:bg-opacity-5 transition-all`}
               >
                 Watch Reading
