@@ -3,6 +3,10 @@
 import React, { useState } from 'react';
 import { Send, CheckCircle, AlertCircle, User, Mail, MessageSquare, Sparkles } from 'lucide-react';
 
+
+import { trackEvent } from '../../lib/mixpanel';
+
+
 interface ContactProps {
   theme: 'sun' | 'moon';
 }
@@ -18,28 +22,54 @@ export default function Contact({ theme }: ContactProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('loading');
+
+    // TRACK EVENT: Form Submission Started
+    trackEvent('Contact Form Initiated', {
+      sender_name: formData.name, // Optional: Don't track PII if privacy is a concern
+      message_length: formData.message.length
+    });
+
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
+      
       if (res.ok) {
         setStatus('success');
+        
+        // TRACK EVENT: Success
+        trackEvent('Contact Form Submitted', {
+          success: true
+        });
+
         setFormData({ name: '', email: '', message: '' }); 
         setTimeout(() => setStatus('idle'), 5000);
       } else {
         setStatus('error');
+        
+        // TRACK EVENT: API Error
+        trackEvent('Contact Form Failed', {
+          reason: 'API Error',
+          status_code: res.status
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       setStatus('error');
+      
+      // TRACK EVENT: Network Error
+      trackEvent('Contact Form Failed', {
+        reason: 'Network Error',
+        error_message: error.message
+      });
     }
   };
 
   const styles = {
     sun: {
-      bg: 'bg-amber-50', // Matches main page background
+      bg: 'bg-amber-50', 
       text: 'text-amber-900',
       cardBg: 'bg-white',
       inputBg: 'bg-amber-50',
@@ -49,7 +79,7 @@ export default function Contact({ theme }: ContactProps) {
       icon: 'text-amber-400'
     },
     moon: {
-      bg: 'bg-slate-950', // Matches main page background
+      bg: 'bg-slate-950', 
       text: 'text-slate-100',
       cardBg: 'bg-slate-900',
       inputBg: 'bg-slate-950',

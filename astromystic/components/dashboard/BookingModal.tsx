@@ -3,10 +3,8 @@
 import React, { useState } from 'react';
 import { X, Send, CheckCircle } from 'lucide-react';
 
-// =========================================================
-// 1. REAL IMPORTS (Uncomment these in your local Next.js project)
-// =========================================================
-import { auth } from '../../lib/firebase'; // We only need auth now, not db
+import { auth } from '../../lib/firebase';
+import { trackEvent } from '../../lib/mixpanel';
 
 
 
@@ -70,11 +68,27 @@ export default function BookingModal({ isOpen, onClose, serviceTitle, theme, cur
         throw new Error(data.error || "Booking failed");
       }
       
+      // 3. TRACK EVENT: Successful Submission
+      trackEvent('Booking Request Submitted', {
+        service: serviceTitle,
+        is_redemption: isRedemption,
+        has_context: !!situation, // Did they write a situation?
+        has_age: !!age,           // Did they provide age?
+        has_gender: !!gender,     // Did they provide gender?
+        user_email: auth.currentUser.email
+      });
+
       setShowSuccess(true);
       
     } catch (error: any) {
       console.error("Error booking:", error);
       alert(error.message || "Failed to send request.");
+      
+      // TRACK EVENT: Failure
+      trackEvent('Booking Request Failed', { 
+        service: serviceTitle,
+        error: error.message 
+      });
     } finally {
       setLoading(false);
     }

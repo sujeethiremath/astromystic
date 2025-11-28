@@ -1,25 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { 
-  BookOpen, Heart, Users, 
-  FileText, Video,
-  Sun, Moon, Star
+  Sun, Moon, BookOpen, Heart, Users, Clock, MapPin, 
+  FileText, Video, Star, HelpCircle, Menu, X, LayoutDashboard, User as UserIcon, LogOut, Mail, Lock, ArrowLeft, CheckCircle, AlertCircle, Send, Instagram
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 
-// --- IMPORTS ---
+import { useRouter } from 'next/navigation';
 import { useTheme } from '../../context/ThemeContext';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-
-// --- COMPONENTS ---
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import StarField from '../../components/StarField';
 import AuthModal from '../../components/AuthModal';
+import { trackEvent, identifyUser, resetUser } from '../../lib/mixpanel'; // Import Mixpanel
 
 export default function AboutPage() {
   const router = useRouter();
@@ -31,12 +28,18 @@ export default function AboutPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [dashboardPath, setDashboardPath] = useState('/dashboard');
 
+  // 1. TRACK PAGE VIEW
+  useEffect(() => {
+    trackEvent("Page Viewed", { page: "About Page", theme: theme });
+  }, []);
+
   // Auth Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
       if (currentUser) {
+        identifyUser(currentUser.uid, currentUser.email || undefined); // Identify User
         try {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists() && userDoc.data().role === 'admin') {
@@ -53,6 +56,8 @@ export default function AboutPage() {
   }, []);
 
   const handleSignOut = async () => {
+    trackEvent("User Signed Out", { location: "About Page" }); // Track Logout
+    resetUser(); // Reset Mixpanel session
     await signOut(auth);
     router.push('/');
   };
@@ -163,7 +168,7 @@ export default function AboutPage() {
       <Navbar 
         user={user} 
         authLoading={authLoading}
-        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenAuth={() => { trackEvent("Auth Modal Opened", { source: "About Page Navbar" }); setIsAuthModalOpen(true); }}
         onSignOut={handleSignOut}
         currentStyles={current}
         dashboardPath={dashboardPath}
@@ -193,7 +198,6 @@ export default function AboutPage() {
                {/* Text Group (Scaled Up) */}
                <div className="flex flex-col -space-y-2 text-left">
                   <div className="flex items-baseline">
-                    {/* Removed 'italic' class to fix mobile rendering of 'l' */}
                     <span className="text-5xl md:text-7xl font-normal mr-2 opacity-90" style={{ fontFamily: 'Brush Script MT, cursive' }}>
                       gul
                     </span>
@@ -275,7 +279,7 @@ export default function AboutPage() {
                   <p className="opacity-80 mb-6 flex-grow">{service.desc}</p>
 
                   <div className="mt-auto pt-4 border-t border-current border-opacity-10">
-                    <div className="text-xs font-bold opacity-50 mb-2 uppercase">Details</div>
+                    <div className="text-xs font-bold opacity-50 mb-2 uppercase">Requirements</div>
                     <ul className="space-y-1 text-sm opacity-70">
                       {service.details.map((detail, i) => (
                         <li key={i} className="flex items-start gap-2">
@@ -291,7 +295,10 @@ export default function AboutPage() {
             <div className="mt-12 text-center">
               <p className="opacity-60 mb-4 text-sm">Ready to discover your path?</p>
               <button 
-                onClick={() => user ? router.push(dashboardPath) : setIsAuthModalOpen(true)}
+                onClick={() => { 
+                  trackEvent("Button Clicked", { button: "Book a Reading", location: "About Page" });
+                  user ? router.push(dashboardPath) : setIsAuthModalOpen(true);
+                }}
                 className={`px-8 py-4 rounded-full font-bold shadow-lg hover:scale-105 transition-transform ${current.button}`}
               >
                 Book a Reading
@@ -301,6 +308,7 @@ export default function AboutPage() {
         
         </div>
       </main>
+      
       {/* POWERED BY SECTION */}
       <section className={`py-12 text-center border-t border-current border-opacity-10 ${current.bg} ${current.text}`}>
          <a 
@@ -308,8 +316,10 @@ export default function AboutPage() {
            target="_blank" 
            rel="noopener noreferrer"
            className="inline-flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity duration-300"
+           onClick={() => trackEvent("Powered By Link Clicked", { location: "About Page" })}
          >
            <span className="text-sm uppercase tracking-widest">Powered by</span>
+           {/* Inverts logo color in dark mode to ensure visibility */}
            <img 
              src="/hiremath-logo.webp" 
              alt="Hiremath Labs" 
@@ -317,6 +327,7 @@ export default function AboutPage() {
            /> 
          </a>
       </section>
+
       <Footer currentStyles={current} />
     </div>
   );

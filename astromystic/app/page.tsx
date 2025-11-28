@@ -8,11 +8,6 @@ import {
   BookOpen, Heart, Users, Video, FileText, Star 
 } from 'lucide-react';
 import { User } from 'firebase/auth';
-
-// =========================================================
-// 1. REAL IMPORTS (UNCOMMENT THESE IN YOUR LOCAL PROJECT)
-// =========================================================
-
 import { useRouter } from 'next/navigation';
 import { useTheme } from '../context/ThemeContext';
 import { auth, db } from '../lib/firebase';
@@ -26,7 +21,7 @@ import Hero from '../components/sections/Hero';
 import Services from '../components/sections/Services';
 import About from '../components/sections/About';
 import Contact from '../components/sections/Contact';
-
+import { trackEvent, identifyUser, resetUser } from '../lib/mixpanel';
 
 export default function Home() {
   const router = useRouter();
@@ -38,10 +33,12 @@ export default function Home() {
   const [dashboardPath, setDashboardPath] = useState('/dashboard'); 
 
   useEffect(() => {
+    trackEvent("Page Viewed", { page: "Landing Homepage", theme: theme });
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
       if (currentUser) {
+        identifyUser(currentUser.uid, currentUser.email || undefined);
         try {
           const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
           if (userDoc.exists() && userDoc.data().role === 'admin') setDashboardPath('/admin');
@@ -53,11 +50,14 @@ export default function Home() {
   }, []);
 
   const handleBookNow = () => {
+    trackEvent("Button Clicked", { button: "Book a Reading", location: "Homepage" });
     if (!user) setIsAuthModalOpen(true);
     else router.push(dashboardPath);
   };
 
   const handleSignOut = async () => {
+    trackEvent("User Signed Out");
+    resetUser();
     await signOut(auth);
     setDashboardPath('/dashboard');
     router.push('/'); 
@@ -84,7 +84,7 @@ export default function Home() {
   return (
     <div className={`min-h-screen transition-colors duration-700 ease-in-out ${current.bg} ${current.text} font-sans selection:bg-opacity-30 selection:bg-purple-500`}>
       <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} theme={theme} />
-      <Navbar user={user} authLoading={authLoading} onOpenAuth={() => setIsAuthModalOpen(true)} onSignOut={handleSignOut} currentStyles={current} dashboardPath={dashboardPath} theme={theme} toggleTheme={toggleTheme} />
+      <Navbar user={user} authLoading={authLoading} onOpenAuth={() => { trackEvent("Auth Modal Opened", { source: "Navbar" }); setIsAuthModalOpen(true); }} onSignOut={handleSignOut} currentStyles={current} dashboardPath={dashboardPath} theme={theme} toggleTheme={() => { trackEvent("Theme Toggled"); toggleTheme(); }} />
       <main className="pt-16 relative">
         <StarField theme={theme} />
         <Hero theme={theme} currentStyles={current} onBookNow={handleBookNow} />
@@ -92,21 +92,12 @@ export default function Home() {
         <About theme={theme} />
         <Contact theme={theme} />
         {/* POWERED BY SECTION */}
-      <section className={`py-12 text-center border-t border-current border-opacity-10 ${current.bg} ${current.text}`}>
-         <a 
-           href="https://sujeethiremath.com" 
-           target="_blank" 
-           rel="noopener noreferrer"
-           className="inline-flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity duration-300"
-         >
-           <span className="text-sm uppercase tracking-widest">Powered by</span>
-           <img 
-             src="/hiremath-logo.webp" 
-             alt="Hiremath Labs" 
-             className={`h-16 w-auto ${theme === 'moon' ? 'invert' : ''}`} 
-           /> 
-         </a>
-      </section>
+        <section className={`py-12 text-center border-t border-current border-opacity-10 ${current.bg} ${current.text}`}>
+           <a href="https://sujeethiremath.com" target="_blank" rel="noopener noreferrer" className="inline-flex flex-col items-center gap-2 opacity-50 hover:opacity-100 transition-opacity duration-300" onClick={() => trackEvent("Powered By Link Clicked")}>
+             <span className="text-sm uppercase tracking-widest">Powered by</span>
+             <img src="/hiremath-logo.webp" alt="Hiremath Labs" className={`h-16 w-auto ${theme === 'moon' ? 'invert' : ''}`} /> 
+           </a>
+        </section>
         <Footer currentStyles={current} />
       </main>
     </div>
