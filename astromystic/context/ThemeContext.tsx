@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -45,7 +45,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.setItem('astromystic-theme', dbTheme);
           }
         } catch (e) {
-          console.error("Theme sync error:", e);
+          console.error('Theme sync error:', e);
         }
       }
     });
@@ -60,9 +60,13 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
     if (auth.currentUser) {
       try {
-        await setDoc(doc(db, 'users', auth.currentUser.uid), { theme: newTheme }, { merge: true });
+        await setDoc(
+          doc(db, 'users', auth.currentUser.uid),
+          { theme: newTheme },
+          { merge: true }
+        );
       } catch (e) {
-        console.error("Error saving theme:", e);
+        console.error('Error saving theme:', e);
       }
     }
   };
@@ -70,7 +74,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   // Prevent hydration mismatch or flash
   if (!mounted) {
     // CHANGED: Loading background is now Amber (Sun) instead of Slate (Moon) to prevent flashing
-    return <div className="min-h-screen bg-amber-50" />; 
+    return <div className="min-h-screen bg-amber-50" />;
   }
 
   return (

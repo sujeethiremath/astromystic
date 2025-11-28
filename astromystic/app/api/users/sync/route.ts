@@ -7,14 +7,20 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Check if Admin SDK is ready
     if (!adminDb) {
-      return NextResponse.json({ error: 'Server misconfigured: Missing Admin Keys' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Server misconfigured: Missing Admin Keys' },
+        { status: 500 }
+      );
     }
 
     // 2. Parse the body
     const { uid, email, firstName, lastName, photoURL } = await req.json();
 
     if (!uid || !email) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
     }
 
     const userRef = adminDb.collection('users').doc(uid);
@@ -23,8 +29,10 @@ export async function POST(req: NextRequest) {
     // 3. Define the role logic
     const adminEmailsEnv = process.env.ADMIN_EMAILS || '';
     // Create an array of lowercase emails for case-insensitive comparison
-    const adminEmails = adminEmailsEnv.split(',').map(e => e.trim().toLowerCase());
-    
+    const adminEmails = adminEmailsEnv
+      .split(',')
+      .map((e) => e.trim().toLowerCase());
+
     let role = 'user';
 
     // Check if the current user's email is in the admin list
@@ -36,12 +44,13 @@ export async function POST(req: NextRequest) {
     const userData = {
       uid,
       email,
-      firstName: firstName || '', 
+      firstName: firstName || '',
       lastName: lastName || '',
       // Construct a display name if available, otherwise fallback
-      displayName: (firstName && lastName) 
-        ? `${firstName} ${lastName}` 
-        : (firstName || lastName || email.split('@')[0]),
+      displayName:
+        firstName && lastName
+          ? `${firstName} ${lastName}`
+          : firstName || lastName || email.split('@')[0],
       photoURL: photoURL || '',
       lastLogin: new Date().toISOString(),
     };
@@ -54,25 +63,24 @@ export async function POST(req: NextRequest) {
         createdAt: new Date().toISOString(),
       });
       return NextResponse.json({ message: 'User created', role });
-    } 
-    
+    }
+
     // 5. If user exists, UPDATE specific fields
     else {
       const existingRole = userSnap.data()?.role || 'user';
-      
+
       // Upgrade to admin if email is in the list but role isn't set yet
       if (role === 'admin' && existingRole !== 'admin') {
-         await userRef.update({ role: 'admin' });
-         role = 'admin';
+        await userRef.update({ role: 'admin' });
+        role = 'admin';
       } else {
-         role = existingRole;
+        role = existingRole;
       }
 
       await userRef.update(userData);
-      
+
       return NextResponse.json({ message: 'User updated', role });
     }
-
   } catch (error: any) {
     console.error('❌ Error in /api/users/sync:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
