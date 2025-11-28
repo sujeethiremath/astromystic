@@ -1,39 +1,23 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Sun,
-  Moon,
-  Play,
-  LogOut,
-  LayoutDashboard,
-  Compass,
-  Calendar,
-  ShoppingBag,
-  ExternalLink,
-  Video,
-  Star,
-  User as UserIcon,
-  X,
-  Send,
-  CheckCircle,
-} from 'lucide-react';
 import { User } from 'firebase/auth';
-import Footer from '../../components/Footer';
-
-// =========================================================
-// 1. REAL IMPORTS
-// =========================================================
+import { FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+
+// --- CONTEXT & FIREBASE ---
 import { useTheme } from '../../context/ThemeContext';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
+
+// --- COMPONENTS ---
 import StarField from '../../components/StarField';
 import DashboardNavbar from '../../components/dashboard/DashboardNavbar';
-// FIXED: Plural 'ReadingsList' to match filename
 import ReadingsList from '../../components/dashboard/ReadingList';
 import BookingList from '../../components/dashboard/BookingList';
+import MyChart from '../../components/dashboard/MyChart';
+import Footer from '../../components/Footer';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -41,13 +25,17 @@ export default function Dashboard() {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'readings' | 'book'>('readings');
+
+  // Tabs state
+  const [activeTab, setActiveTab] = useState<'readings' | 'book' | 'my-chart'>(
+    'readings'
+  );
 
   // Auth Protection
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
-        router.push('/'); // Redirect to home if not logged in
+        router.push('/');
       } else {
         // Check Admin role to redirect if needed
         try {
@@ -56,7 +44,9 @@ export default function Dashboard() {
             router.push('/admin');
             return;
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error('Role check error', e);
+        }
         setUser(currentUser);
         setLoading(false);
       }
@@ -65,6 +55,8 @@ export default function Dashboard() {
   }, []);
 
   const handleSignOut = async () => {
+    // Clear user state immediately to prevent permission errors on unmount
+    setUser(null);
     await signOut(auth);
     router.push('/');
   };
@@ -73,23 +65,11 @@ export default function Dashboard() {
   const styles = {
     sun: {
       bg: 'bg-amber-50',
-      panelBg: 'bg-white',
       text: 'text-amber-900',
-      border: 'border-amber-200',
-      accent: 'bg-amber-100 text-amber-700',
-      button: 'bg-amber-600 hover:bg-amber-700 text-white',
-      nav: 'bg-amber-50/90 border-amber-200',
-      secondary: 'text-amber-600',
     },
     moon: {
       bg: 'bg-slate-950',
-      panelBg: 'bg-slate-900',
       text: 'text-indigo-100',
-      border: 'border-indigo-900',
-      accent: 'bg-slate-800 text-indigo-300',
-      button: 'bg-indigo-600 hover:bg-indigo-700 text-white',
-      nav: 'bg-slate-950/90 border-indigo-900',
-      secondary: 'text-indigo-400',
     },
   };
 
@@ -117,21 +97,20 @@ export default function Dashboard() {
         currentStyles={current}
       />
 
-      <main className="pt-24 px-4 pb-12 max-w-7xl mx-auto relative z-10">
+      <main className="pt-24 px-4 pb-20 max-w-7xl mx-auto relative z-10 min-h-[80vh]">
         {/* Welcome Header */}
-        <div className="mb-12">
+        <div className="mb-8 md:mb-12">
           <h1 className="text-3xl md:text-4xl font-serif mb-2">
             Welcome back, {user?.displayName || 'Star Traveler'}
           </h1>
-          <p className="opacity-70 max-w-2xl">
-            Here you can access your personal reading library or chart your next
-            course.
+          <p className="opacity-70 max-w-2xl text-sm md:text-base">
+            Here you can access your personal reading library, chart your next
+            course, or view your natal blueprint.
           </p>
         </div>
 
         {/* Tabs / Actions */}
-        {/* ADDED: overflow-x-auto for safe mobile scrolling */}
-        <div className="flex gap-6 mb-8 border-b border-current border-opacity-10 pb-1 overflow-x-auto">
+        <div className="flex gap-6 mb-8 border-b border-current border-opacity-10 pb-1 overflow-x-auto no-scrollbar">
           <button
             onClick={() => setActiveTab('readings')}
             className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 whitespace-nowrap ${activeTab === 'readings' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
@@ -144,19 +123,35 @@ export default function Dashboard() {
           >
             BOOK NEW
           </button>
+          <button
+            onClick={() => setActiveTab('my-chart')}
+            className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'my-chart' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
+          >
+            <FileText className="w-4 h-4" /> MY CHART
+          </button>
         </div>
 
         {/* DYNAMIC CONTENT AREA */}
-        {activeTab === 'readings' ? (
-          <ReadingsList
-            currentStyles={current}
-            theme={theme}
-            onBrowse={() => setActiveTab('book')}
-          />
-        ) : (
-          <BookingList currentStyles={current} />
+        {/* Only render if user exists to prevent hydration mismatch or flash */}
+        {user && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {activeTab === 'readings' && (
+              <ReadingsList
+                currentStyles={current}
+                theme={theme}
+                onBrowse={() => setActiveTab('book')}
+              />
+            )}
+
+            {activeTab === 'book' && <BookingList currentStyles={current} />}
+
+            {activeTab === 'my-chart' && (
+              <MyChart currentStyles={current} theme={theme} />
+            )}
+          </div>
         )}
       </main>
+
       <Footer currentStyles={current} />
     </div>
   );
