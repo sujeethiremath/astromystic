@@ -33,14 +33,12 @@ interface ServiceItem {
   icon: React.ReactNode;
   price: string;
   desc: string;
-  isPackage?: boolean;
 }
 
 export default function BookingList({ currentStyles }: BookingListProps) {
   const { theme } = useTheme();
 
   const [selectedService, setSelectedService] = useState<string | null>(null);
-  const [isRedemption, setIsRedemption] = useState(false);
   const [credits, setCredits] = useState(0);
 
   // 1. TRACKING: View
@@ -65,23 +63,16 @@ export default function BookingList({ currentStyles }: BookingListProps) {
   }, []);
 
   // 2. TRACKING: Click
-  const handleBook = (
-    title: string,
-    redemption: boolean = false,
-    price: string = '0',
-    isPackage: boolean = false
-  ) => {
+  const handleBook = (title: string, price: string = '0') => {
     // Detailed Event Logging
     trackEvent('Booking Initiated', {
       service_name: title,
-      action_type: redemption ? 'Credit Redemption' : 'New Purchase',
+      action_type: 'New Purchase',
       price: price,
-      is_package: isPackage,
       user_current_credits: credits,
     });
 
     setSelectedService(title);
-    setIsRedemption(redemption);
   };
 
   const ITEMS: ServiceItem[] = [
@@ -121,13 +112,6 @@ export default function BookingList({ currentStyles }: BookingListProps) {
       price: '$100',
       desc: 'Video Response + PDF. Navigate timing and life events.',
     },
-    {
-      title: 'Cosmic Package',
-      icon: <Zap className="w-6 h-6" />,
-      price: '$400',
-      desc: '4 Readings of your choice (Valid for 90 days).',
-      isPackage: true,
-    },
   ];
 
   return (
@@ -138,53 +122,16 @@ export default function BookingList({ currentStyles }: BookingListProps) {
         serviceTitle={selectedService || ''}
         theme={theme}
         currentStyles={currentStyles}
-        isRedemption={isRedemption}
       />
 
+      {/* ADDED CONTAINER DIV HERE to match the closing div and provide Grid layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* REDEMPTION CARD */}
-        {credits > 0 && (
-          <div
-            className={`p-6 rounded-xl border flex flex-col relative overflow-hidden ${theme === 'sun' ? 'bg-amber-100 border-amber-300' : 'bg-indigo-900/50 border-indigo-500'} shadow-lg`}
-          >
-            <div className="absolute top-0 right-0 bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl tracking-widest uppercase">
-              {credits} Credits Left
-            </div>
-            <div
-              className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 bg-green-500 text-white`}
-            >
-              <Zap className="w-6 h-6" />
-            </div>
-            <h3 className="font-serif text-xl font-bold mb-2">
-              Redeem Reading
-            </h3>
-            <p className="text-sm opacity-70 mb-6 flex-grow">
-              Use a credit from your package to get a new reading now.
-            </p>
-            <button
-              // Track redemption
-              onClick={() =>
-                handleBook('Package Reading', true, '1 Credit', false)
-              }
-              className={`w-full py-2 rounded-lg text-sm font-bold bg-green-600 text-white hover:bg-green-500 transition-all`}
-            >
-              Use 1 Credit
-            </button>
-          </div>
-        )}
-
-        {/* STANDARD SERVICES */}
         {ITEMS.map((item, idx) => (
           <div
             key={idx}
-            className={`p-6 rounded-xl border flex flex-col relative overflow-hidden ${currentStyles.panelBg} ${currentStyles.border} ${item.isPackage ? 'border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : ''}`}
+            // FIXED: Removed extra quotes/braces at the end of className
+            className={`p-6 rounded-xl border flex flex-col relative overflow-hidden ${currentStyles.panelBg} ${currentStyles.border}`}
           >
-            {item.isPackage && (
-              <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl tracking-widest uppercase">
-                Best Value
-              </div>
-            )}
-
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center mb-4 ${currentStyles.accent}`}
             >
@@ -196,15 +143,8 @@ export default function BookingList({ currentStyles }: BookingListProps) {
             <div className="flex items-center justify-between mt-auto pt-4 border-t border-current border-opacity-10">
               <span className="font-bold">{item.price}</span>
               <button
-                // Track specific service click
-                onClick={() =>
-                  handleBook(
-                    item.title,
-                    false,
-                    item.price,
-                    item.isPackage || false
-                  )
-                }
+                // FIXED: Removed the 'false' argument. Now passes (title, price) correctly.
+                onClick={() => handleBook(item.title, item.price)}
                 className={`text-sm font-bold hover:underline ${currentStyles.secondary}`}
               >
                 Book Now

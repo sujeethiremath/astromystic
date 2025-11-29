@@ -1,23 +1,56 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  Sun,
+  Moon,
+  Play,
+  LogOut,
+  LayoutDashboard,
+  Compass,
+  Calendar,
+  ShoppingBag,
+  ExternalLink,
+  Video,
+  Star,
+  User as UserIcon,
+  X,
+  Send,
+  CheckCircle,
+  Zap,
+  FileText,
+  MapPin,
+  Sparkles,
+  Heart,
+  Users,
+  Loader2,
+  Instagram,
+  AlertCircle,
+  Globe,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
 import { User } from 'firebase/auth';
-import { FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-
-// --- CONTEXT & FIREBASE ---
 import { useTheme } from '../../context/ThemeContext';
 import { auth, db } from '../../lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-
-// --- COMPONENTS ---
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  doc,
+  getDoc,
+} from 'firebase/firestore';
 import StarField from '../../components/StarField';
 import DashboardNavbar from '../../components/dashboard/DashboardNavbar';
 import ReadingsList from '../../components/dashboard/ReadingList';
 import BookingList from '../../components/dashboard/BookingList';
-import MyChart from '../../components/dashboard/MyChart';
 import Footer from '../../components/Footer';
+import MyChart from '../../components/dashboard/MyChart';
+import { trackEvent } from '../../lib/mixpanel';
 
 export default function Dashboard() {
   const router = useRouter();
@@ -26,7 +59,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Tabs state
+  // Added 'my-chart' to allowed tabs
   const [activeTab, setActiveTab] = useState<'readings' | 'book' | 'my-chart'>(
     'readings'
   );
@@ -35,7 +68,7 @@ export default function Dashboard() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (!currentUser) {
-        router.push('/');
+        router.push('/'); // Redirect to home if not logged in
       } else {
         // Check Admin role to redirect if needed
         try {
@@ -65,11 +98,25 @@ export default function Dashboard() {
   const styles = {
     sun: {
       bg: 'bg-amber-50',
+      panelBg: 'bg-white',
       text: 'text-amber-900',
+      border: 'border-amber-200',
+      accent: 'bg-amber-100 text-amber-700',
+      inputBg: 'bg-amber-50',
+      button: 'bg-amber-600 hover:bg-amber-700 text-white',
+      nav: 'bg-amber-50/90 border-amber-200',
+      secondary: 'text-amber-600',
     },
     moon: {
       bg: 'bg-slate-950',
+      panelBg: 'bg-slate-900',
       text: 'text-indigo-100',
+      border: 'border-indigo-900',
+      accent: 'bg-slate-800 text-indigo-300',
+      inputBg: 'bg-slate-950',
+      button: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+      nav: 'bg-slate-950/90 border-indigo-900',
+      secondary: 'text-indigo-400',
     },
   };
 
