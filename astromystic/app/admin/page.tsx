@@ -24,6 +24,8 @@ import {
   Trash2,
   Mail,
   Send,
+  FileText,
+  PlusCircle,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -43,6 +45,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import StarField from '../../components/StarField';
+import ChartManagerModal from '../../components/admin/ChartManagerModal';
 
 // Types
 interface UserData {
@@ -72,6 +75,15 @@ interface RequestData {
 interface VideoItem {
   title: string;
   url: string;
+}
+
+interface ChartData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  createdAt: string;
+  meta: any;
+  planets: any;
 }
 
 export default function AdminDashboard() {
@@ -108,6 +120,16 @@ export default function AdminDashboard() {
   const [emailSubject, setEmailSubject] = useState('');
   const [emailMessage, setEmailMessage] = useState('');
   const [sendingEmail, setSendingEmail] = useState(false);
+
+  //Chart State
+  const [standaloneCharts, setStandaloneCharts] = useState<ChartData[]>([]);
+  const [showChartModal, setShowChartModal] = useState(false);
+  const [selectedChart, setSelectedChart] = useState<ChartData | null>(null);
+
+  // ... existing state ...
+  // NEW: Delete Confirmation State
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [chartToDelete, setChartToDelete] = useState<string | null>(null);
 
   // 1. INITIAL AUTH CHECK
   useEffect(() => {
@@ -153,6 +175,52 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  // Fetch Saved Charts
+  const fetchStandaloneCharts = async () => {
+    if (!auth.currentUser) return;
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch('/api/admin/charts', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.charts) setStandaloneCharts(data.charts);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // 1. Open the modal instead of deleting immediately
+  const promptDeleteChart = (id: string) => {
+    setChartToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  // 2. The actual delete logic (attached to the "Confirm" button in the modal)
+  const confirmDeleteChart = async () => {
+    if (!chartToDelete) return;
+
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      await fetch(`/api/admin/charts?id=${chartToDelete}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // Refresh list and close modal
+      fetchStandaloneCharts();
+      setShowDeleteModal(false);
+      setChartToDelete(null);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to delete.');
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) fetchStandaloneCharts();
+  }, [currentUser]);
 
   // 3. FETCH REQUESTS (Real-time Listener)
   useEffect(() => {
@@ -322,6 +390,19 @@ export default function AdminDashboard() {
       className={`min-h-screen font-sans p-6 md:p-12 transition-colors duration-500 ${current.bg} ${current.text}`}
     >
       <StarField theme={theme} />
+      <ChartManagerModal
+        isOpen={showChartModal}
+        onClose={() => {
+          setShowChartModal(false);
+          setSelectedChart(null);
+        }}
+        existingChart={selectedChart}
+        onSave={() => {
+          fetchStandaloneCharts();
+        }}
+        currentStyles={current}
+        theme={theme}
+      />
 
       {/* Success Modal */}
       {showSuccessModal && (
@@ -408,6 +489,15 @@ export default function AdminDashboard() {
         </div>
         <div className="flex items-center gap-4">
           <button
+            onClick={() => {
+              setSelectedChart(null);
+              setShowChartModal(true);
+            }}
+            className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg border border-current opacity-70 hover:opacity-100`}
+          >
+            <PlusCircle className="w-4 h-4" /> New Chart
+          </button>
+          <button
             onClick={toggleTheme}
             className={`p-2 rounded-full hover:bg-current hover:bg-opacity-10`}
           >
@@ -432,7 +522,7 @@ export default function AdminDashboard() {
       <div className="grid lg:grid-cols-12 gap-8 relative z-10 h-[calc(100vh-10rem)]">
         {/* LEFT COLUMN: USER LIST */}
         <div
-          className={`lg:col-span-4 border rounded-xl overflow-hidden flex flex-col ${current.panelBg} ${current.border}`}
+          className={`lg:col-span-3 border rounded-xl overflow-hidden flex flex-col ${current.panelBg} ${current.border}`}
         >
           <div
             className={`p-4 border-b flex justify-between items-center ${current.border} bg-opacity-50`}
@@ -475,7 +565,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* RIGHT COLUMN: WORKSPACE */}
-        <div className="lg:col-span-8 flex flex-col gap-6 overflow-y-auto pb-10">
+        <div className="lg:col-span-5 flex flex-col gap-6 overflow-y-auto pb-10">
           {selectedUser ? (
             <>
               {/* USER HEADER */}
@@ -701,7 +791,88 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+        {/* COL 3: SAVED CHARTS (Span 4) */}
+        <div
+          className={`lg:col-span-4 border rounded-xl overflow-hidden flex flex-col ${current.panelBg} ${current.border}`}
+        >
+          <div
+            className={`p-4 border-b flex justify-between items-center ${current.border} bg-opacity-50`}
+          >
+            <h2 className="font-bold flex items-center gap-2 text-sm">
+              <FileText className="w-4 h-4" /> Saved Charts (
+              {standaloneCharts.length})
+            </h2>
+          </div>
+          <div className="overflow-y-auto flex-1 p-2 space-y-2 custom-scrollbar">
+            {standaloneCharts.map((chart) => (
+              <div
+                key={chart.id}
+                className={`p-3 rounded-lg border flex justify-between items-center group transition-all ${selectedChart?.id === chart.id ? current.listActive : `${current.border} ${current.listHover}`}`}
+              >
+                <button
+                  onClick={() => {
+                    setSelectedChart(chart);
+                    setShowChartModal(true);
+                  }}
+                  className="text-left flex-1"
+                >
+                  <div className="font-bold text-sm">
+                    {chart.firstName} {chart.lastName}
+                  </div>
+                  <div className="text-xs opacity-50">
+                    {new Date(chart.meta.local_time).toLocaleDateString()} •{' '}
+                    {chart.meta.city}
+                  </div>
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    promptDeleteChart(chart.id);
+                  }}
+                  className="p-2 text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-400/10 rounded"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className={`relative w-full max-w-sm p-6 rounded-2xl shadow-2xl border ${current.panelBg} ${current.border}`}
+          >
+            <div className="text-center mb-6">
+              <div className="mx-auto w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mb-3">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <h3 className="text-lg font-serif font-bold mb-1">
+                Delete this Chart?
+              </h3>
+              <p className="opacity-60 text-sm">
+                This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className={`flex-1 py-2.5 rounded-xl font-bold text-sm border border-current opacity-60 hover:opacity-100 transition-opacity`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteChart}
+                className="flex-1 py-2.5 rounded-xl font-bold text-sm bg-red-600 hover:bg-red-700 text-white transition-colors shadow-lg"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
