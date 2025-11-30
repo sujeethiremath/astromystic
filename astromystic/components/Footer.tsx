@@ -70,7 +70,7 @@ export default function Footer({ currentStyles }: FooterProps) {
       >
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6 opacity-60 text-sm">
           <div className="font-serif tracking-wide">
-            © {new Date().getFullYear()} Practical Spirituality. All rights
+            © {new Date().getFullYear()} Practical Love Astrology. All rights
             reserved.
           </div>
 
