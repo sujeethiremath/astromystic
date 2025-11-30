@@ -74,7 +74,8 @@ export async function POST(req: Request) {
 
       // 4. Send Emails via Resend (Admin Notification + User Receipt)
       if (process.env.RESEND_API_KEY && userEmail) {
-        const SENDER_EMAIL = 'Practical Love Astrology <onboarding@resend.dev>'; // Update once domain verified
+        const SENDER_EMAIL =
+          'Practical Love Astrology <readings@practicalloveastrology.com>'; // Update once domain verified
         const DASHBOARD_LINK = process.env.NEXT_PUBLIC_BASE_URL
           ? `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`
           : 'https://practicalloveastrology.com/dashboard';
@@ -100,6 +101,40 @@ export async function POST(req: Request) {
                       <p><strong>Question:</strong><br/>${question}</p>
                       <br/>
                       <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin" style="background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Go to Admin Dashboard</a>
+                      <!-- EMAIL SIGNATURE -->
+<div style="opacity:0.9; margin-top:30px; padding-top:20px; border-top:1px solid #eee;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse; line-height:1;">
+    <tr>
+      <!-- Icons Column -->
+      <td style="padding-right:10px; border-right:2px solid #ccc; text-align:center; vertical-align:middle;">
+        <div style="font-size:18px; line-height:18px;">☀️</div>
+        <div style="font-size:14px; line-height:14px;">🌙⭐</div>
+        <div style="font-size:18px; line-height:18px;">⭐</div>
+      </td>
+      <!-- Brand Column -->
+      <td style="padding-left:10px; vertical-align:middle;">
+        <!-- Name -->
+        <div style="margin:0; padding:0; line-height:1;">
+          <span style="font-family:'Brush Script MT','Comic Sans MS',cursive; font-size:26px; font-style:italic; line-height:26px;">gul</span>
+          <span style="font-family:'Times New Roman',serif; font-size:22px; font-weight:bold; letter-spacing:1px; line-height:22px;">NARA</span>
+           <!-- Astrology (fixed to always show) -->
+        <span style="
+        
+          font-family:Arial, sans-serif;
+          font-size:22px;
+          line-height:22px;
+          text-transform:uppercase;
+          color:#bdbdbd;
+          display:block;
+        ">
+          Astrology
+        </span>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
                     </div>
                   `,
             });
@@ -132,29 +167,42 @@ export async function POST(req: Request) {
                     </a>
                   </div>
 
-                  <br /><br />
+                  <br />
           
                   <!-- EMAIL SIGNATURE -->
-                  <div style="opacity: 0.8; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="padding-right: 12px; border-right: 2px solid #ccc; text-align: center; vertical-align: middle; line-height: 1.2;">
-                          <div style="font-size: 14px;">☀️</div>
-                          <div style="font-size: 12px;">🌙⭐</div>
-                          <div style="font-size: 14px;">⭐</div>
-                        </td>
-                        <td style="padding-left: 12px; vertical-align: middle;">
-                          <div style="line-height: 1; margin-bottom: 4px;">
-                            <span style="font-family: 'Brush Script MT', cursive; font-size: 24px; font-style: italic; margin-right: 2px;">gul</span>
-                            <span style="font-family: 'Times New Roman', serif; font-size: 20px; font-weight: bold; letter-spacing: 1px;">NARA</span>
-                          </div>
-                          <div style="font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: #666;">
-                            Astrology
-                          </div>
-                        </td>
-                      </tr>
-                    </table>
-                  </div>
+<div style="opacity:0.9; margin-top:30px; padding-top:20px; border-top:1px solid #eee;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse; line-height:1;">
+    <tr>
+      <!-- Icons Column -->
+      <td style="padding-right:10px; border-right:2px solid #ccc; text-align:center; vertical-align:middle;">
+        <div style="font-size:18px; line-height:18px;">☀️</div>
+        <div style="font-size:14px; line-height:14px;">🌙⭐</div>
+        <div style="font-size:18px; line-height:18px;">⭐</div>
+      </td>
+      <!-- Brand Column -->
+      <td style="padding-left:10px; vertical-align:middle;">
+        <!-- Name -->
+        <div style="margin:0; padding:0; line-height:1;">
+          <span style="font-family:'Brush Script MT','Comic Sans MS',cursive; font-size:26px; font-style:italic; line-height:26px;">gul</span>
+          <span style="font-family:'Times New Roman',serif; font-size:22px; font-weight:bold; letter-spacing:1px; line-height:22px;">NARA</span>
+           <!-- Astrology (fixed to always show) -->
+        <span style="
+        
+          font-family:Arial, sans-serif;
+          font-size:22px;
+          line-height:22px;
+          text-transform:uppercase;
+          color:#bdbdbd;
+          display:block;
+        ">
+          Astrology
+        </span>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
                 </div>
               `,
           });
