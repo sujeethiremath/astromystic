@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Sparkles, Sun, Moon, Star } from 'lucide-react';
+import { trackEvent } from '../../lib/mixpanel';
 
 interface HeroProps {
   currentStyles: any;
@@ -17,6 +18,8 @@ export default function Hero({ currentStyles, theme, onBookNow }: HeroProps) {
   }, []);
 
   const handleScrollToServices = () => {
+    trackEvent('Button Clicked', { button: 'View Services', location: 'Hero' });
+
     const servicesSection = document.getElementById('services');
     if (servicesSection) {
       servicesSection.scrollIntoView({ behavior: 'smooth' });

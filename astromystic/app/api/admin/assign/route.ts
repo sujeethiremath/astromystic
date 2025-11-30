@@ -90,6 +90,7 @@ export async function POST(req: NextRequest) {
           // Use onboarding until domain is verified
           from: 'Practical Love Astrology <readings@practicalloveastrology.com>',
           to: [targetUserEmail],
+          replyTo: 'hiremath09@gmail.com', // Replies go to your Gmail!
           subject: 'Your Reading is Ready! 🌟',
           html: `
             <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">

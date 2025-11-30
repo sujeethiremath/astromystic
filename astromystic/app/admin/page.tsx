@@ -46,7 +46,7 @@ import {
 } from 'firebase/firestore';
 import StarField from '../../components/StarField';
 import ChartManagerModal from '../../components/admin/ChartManagerModal';
-
+import { trackEvent } from '../../lib/mixpanel';
 // Types
 interface UserData {
   uid: string;
@@ -298,7 +298,7 @@ export default function AdminDashboard() {
           : `Reading assigned! Request complete.`
       );
       setShowSuccessModal(true);
-
+      trackEvent('Admin assigned the reading', { user: selectedUser.uid });
       setReadingTitle('');
       setVideoUrl('');
       setSelectedRequest(null);

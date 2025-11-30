@@ -132,6 +132,14 @@ export default function Dashboard() {
     );
   }
 
+  const handleTabChange = (tabName: 'readings' | 'book' | 'my-chart') => {
+    trackEvent('Dashboard Tab Changed', {
+      tab: tabName,
+      userId: user?.uid,
+    });
+    setActiveTab(tabName);
+  };
+
   return (
     <div
       className={`min-h-screen transition-colors duration-500 ${current.bg} ${current.text} font-sans`}
@@ -159,19 +167,19 @@ export default function Dashboard() {
         {/* Tabs / Actions */}
         <div className="flex gap-6 mb-8 border-b border-current border-opacity-10 pb-1 overflow-x-auto no-scrollbar">
           <button
-            onClick={() => setActiveTab('readings')}
+            onClick={() => handleTabChange('readings')}
             className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 whitespace-nowrap ${activeTab === 'readings' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
           >
             MY LIBRARY
           </button>
           <button
-            onClick={() => setActiveTab('book')}
+            onClick={() => handleTabChange('book')}
             className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 whitespace-nowrap ${activeTab === 'book' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
           >
             BOOK NEW
           </button>
           <button
-            onClick={() => setActiveTab('my-chart')}
+            onClick={() => handleTabChange('my-chart')}
             className={`pb-3 px-2 text-sm font-bold tracking-wide transition-all border-b-2 whitespace-nowrap flex items-center gap-2 ${activeTab === 'my-chart' ? `border-current opacity-100` : 'border-transparent opacity-50 hover:opacity-80'}`}
           >
             <FileText className="w-4 h-4" /> MY CHART

@@ -98,6 +98,7 @@ export async function POST(req: Request) {
           await resend.emails.send({
             from: SENDER_EMAIL,
             to: adminEmails,
+            replyTo: 'hiremath09@gmail.com', // Replies go to your Gmail!
             subject: `✨ New Request: ${service} from ${decodedToken.email}`,
             html: `
               <div style="font-family: sans-serif; color: #333; max-width: 600px;">
@@ -166,6 +167,7 @@ export async function POST(req: Request) {
           await resend.emails.send({
             from: SENDER_EMAIL,
             to: [decodedToken.email],
+            replyTo: 'hiremath09@gmail.com', // Replies go to your Gmail!
             subject: `Booking Received: ${service}`,
             html: `
               <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
