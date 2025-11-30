@@ -88,6 +88,7 @@ export async function POST(req: Request) {
           if (adminEmails.length > 0) {
             await resend.emails.send({
               from: SENDER_EMAIL,
+              replyTo: 'hiremath09@gmail.com', // Replies go to your Gmail!
               to: adminEmails,
               subject: `💰 New Paid Booking: ${serviceTitle}`,
               html: `
@@ -144,6 +145,7 @@ export async function POST(req: Request) {
           await resend.emails.send({
             from: SENDER_EMAIL,
             to: [userEmail],
+            replyTo: 'hiremath09@gmail.com', // Replies go to your Gmail!
             subject: `Booking Confirmed: ${serviceTitle}`,
             html: `
                 <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
