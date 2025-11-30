@@ -66,6 +66,8 @@ interface RequestData {
   question: string;
   createdAt: string;
   status: 'pending' | 'completed';
+  p1Details?: { name: string; date: string; time: string; city: string };
+  p2Details?: { name: string; date: string; time: string; city: string };
   age?: string;
   gender?: string;
   remainingReadings?: number;
@@ -664,21 +666,42 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        <div className="mt-3 pt-2 border-t border-current border-opacity-10 flex justify-between items-center">
-                          <div className="text-xs opacity-50">
-                            Context: {req.age || 'N/A'} • {req.gender || 'N/A'}
-                          </div>
-                          {(req.totalReadings || 0) > 1 && (
-                            <div
-                              className={`text-xs font-bold px-2 py-0.5 rounded ${req.status === 'completed' ? 'bg-green-500/20 text-green-500' : 'bg-blue-500/20 text-blue-400'}`}
-                            >
-                              {req.status === 'completed'
-                                ? 'Completed'
-                                : `${req.remainingReadings} readings left`}
+                        <div className="mt-3 pt-3 border-t border-current border-opacity-10">
+                          {/* NEW: Show detailed birth data if available */}
+                          {req.p1Details ? (
+                            <div className="grid grid-cols-2 gap-2 text-xs mb-2">
+                              <div className="p-2 rounded bg-current bg-opacity-5">
+                                <span className="font-bold block mb-1 opacity-70">
+                                  Person 1 ({req.p1Details.name})
+                                </span>
+                                <div className="opacity-50">
+                                  {req.p1Details.date} @ {req.p1Details.time}
+                                  <br />
+                                  {req.p1Details.city}
+                                </div>
+                              </div>
+
+                              {req.p2Details && req.p2Details.name && (
+                                <div className="p-2 rounded bg-current bg-opacity-5">
+                                  <span className="font-bold block mb-1 opacity-70">
+                                    Person 2 ({req.p2Details.name})
+                                  </span>
+                                  <div className="opacity-50">
+                                    {req.p2Details.date} @ {req.p2Details.time}
+                                    <br />
+                                    {req.p2Details.city}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            /* OLD: Fallback for older requests */
+                            <div className="text-xs opacity-50 mb-2">
+                              Context: {req.age || 'N/A'} •{' '}
+                              {req.gender || 'N/A'}
                             </div>
                           )}
                         </div>
-
                         {/* ACTION BUTTON */}
                         {activeTab === 'open' &&
                           selectedRequest?.id !== req.id && (

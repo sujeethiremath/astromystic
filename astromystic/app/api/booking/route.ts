@@ -101,7 +101,7 @@ export async function POST(req: Request) {
                 <h2 style="color: #4F46E5;">New Reading Request</h2>
                 <p><strong>Client:</strong> ${decodedToken.email}</p>
                 <p><strong>Service:</strong> ${service}</p>
-                <p><strong>Details:</strong> Age: ${age || 'N/A'} | Gender: ${gender || 'N/A'}</p>
+                <p><strong>Details:</strong> Details Person 1: ${p1Details || 'N/A'} | Details Person 2: ${p2Details || 'N/A'}</p>
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
                 
