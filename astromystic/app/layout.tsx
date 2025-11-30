@@ -10,37 +10,48 @@ const BASE_URL =
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),
   title: {
-    default: 'Practical Spirituality | Explore Your Cosmic Potential',
-    template: '%s | Practical Spirituality',
+    default:
+      'Practical Love Astrology | Transform Your Life With Insightful, Practical Astrology!',
+    template: '%s | Practical Love Astrology',
   },
   description:
-    'Evolutionary astrology readings. Discover your natal chart, solar return, and synastry insights with a professional guide.',
+    'A blend of astrology and tarot to help you understand yourself, the people in your life, and your relationship dynamics so that youclaim your power back!',
   keywords: [
     'Astrology',
     'Natal Chart',
     'Horoscope',
     'Zodiac',
+    'Love Astrology',
+    'Relationships',
+    'Gulnara',
+    'Ilyasova',
+    'Robertovna',
+    'Gulnara Robertovna',
+    'Gulnara Ilyasova',
     'Spirituality',
+    'Tarot',
+    'Synastry Chart',
     'Readings',
   ],
   authors: [{ name: 'Gulnara Ilyasova' }],
-  creator: 'Practical Spirituality',
+  creator: 'Practical Love Astrology',
 
   // Open Graph (Facebook, LinkedIn, iMessage, WhatsApp)
   openGraph: {
     type: 'website',
     locale: 'en_US',
     url: '/',
-    title: 'Practical Spirituality | Unlock Your Star Chart',
+    title:
+      'Practical Love Astrology | Transform Your Life With Insightful, Practical Astrology!',
     description:
-      "Evolutionary astrology readings to guide your life's journey.",
-    siteName: 'Practical Spirituality',
+      'A blend of astrology and tarot to help you understand yourself, the people in your life, and your relationship dynamics so that youclaim your power back!',
+    siteName: 'Practical Love Astrology',
     images: [
       {
         url: '/og-card.jpg', // Ensure you have a file named og-card.jpg in your public/ folder
         width: 1200,
         height: 630,
-        alt: 'Practical Spirituality - Cosmic Readings',
+        alt: 'Practical Love Astrology',
       },
     ],
   },
@@ -48,9 +59,10 @@ export const metadata: Metadata = {
   // Twitter Card
   twitter: {
     card: 'summary_large_image',
-    title: 'Practical Spirituality | Explore Your Cosmic Potential',
+    title:
+      'Practical Love Astrology | Transform Your Life With Insightful, Practical Astrology!',
     description:
-      "Evolutionary astrology readings to guide your life's journey.",
+      'A blend of astrology and tarot to help you understand yourself, the people in your life, and your relationship dynamics so that youclaim your power back!',
     images: ['/og-card.jpg'],
     creator: '@yourtwitterhandle',
   },
