@@ -27,7 +27,8 @@ export async function POST(req: Request) {
     const uid = decodedToken.uid;
 
     // 2. Get Data
-    const { service, situation, question, age, gender, isRedemption } =
+    // NEW
+    const { service, situation, question, p1Details, p2Details, isRedemption } =
       await req.json();
 
     if (!situation || !question) {
@@ -65,18 +66,13 @@ export async function POST(req: Request) {
         service: service,
         situation,
         question,
-        age: age || 'Not provided',
-        gender: gender || 'Not provided',
+        p1Details: p1Details || {}, // Save Person 1 info
+        p2Details: p2Details || {}, // Save Person 2 info (if exists)
         createdAt: new Date().toISOString(),
         status: 'pending',
         userEmail: decodedToken.email,
         userId: uid,
       });
-
-    // 5. Update User Profile Context (Optional)
-    if (age || gender) {
-      await userRef.set({ age, gender }, { merge: true });
-    }
 
     // 6. SEND EMAIL NOTIFICATIONS (Admin + User)
     if (process.env.RESEND_API_KEY) {
@@ -105,7 +101,7 @@ export async function POST(req: Request) {
                 <h2 style="color: #4F46E5;">New Reading Request</h2>
                 <p><strong>Client:</strong> ${decodedToken.email}</p>
                 <p><strong>Service:</strong> ${service}</p>
-                <p><strong>Details:</strong> Age: ${age || 'N/A'} | Gender: ${gender || 'N/A'}</p>
+                <p><strong>Details:</strong> Details Person 1: ${p1Details || 'N/A'} | Details Person 2: ${p2Details || 'N/A'}</p>
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
                 

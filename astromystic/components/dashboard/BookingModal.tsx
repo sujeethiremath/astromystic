@@ -23,10 +23,14 @@ export default function BookingModal({
 }: BookingModalProps) {
   const [situation, setSituation] = useState('');
   const [question, setQuestion] = useState('');
-  const [age, setAge] = useState('');
-  const [gender, setGender] = useState('');
+  const [p1, setP1] = useState({ name: '', date: '', time: '', city: '' });
+  const [p2, setP2] = useState({ name: '', date: '', time: '', city: '' });
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const requiresPartner =
+    serviceTitle.toLowerCase().includes('synastry') ||
+    serviceTitle.toLowerCase().includes('composite');
 
   if (!isOpen) return null;
 
@@ -34,8 +38,8 @@ export default function BookingModal({
     setShowSuccess(false);
     setSituation('');
     setQuestion('');
-    setAge('');
-    setGender('');
+    setP1({ name: '', date: '', time: '', city: '' }); // Reset P1
+    setP2({ name: '', date: '', time: '', city: '' }); // Reset P2
     onClose();
   };
 
@@ -59,8 +63,8 @@ export default function BookingModal({
           serviceTitle,
           situation,
           question,
-          age,
-          gender,
+          p1Details: p1, // Send P1 object
+          p2Details: requiresPartner ? p2 : null, // Only send P2 if needed
         }),
       });
 
@@ -101,37 +105,99 @@ export default function BookingModal({
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs uppercase tracking-widest opacity-60 mb-2">
-                Age (Optional)
-              </label>
+          <div className="space-y-3 p-4 rounded-xl border border-current border-opacity-20">
+            <h3 className="text-xs font-bold uppercase tracking-widest opacity-70">
+              Your Birth Details
+            </h3>
+
+            <div className="grid grid-cols-1 gap-3">
               <input
-                type="text"
-                value={age}
-                onChange={(e) => setAge(e.target.value)}
-                placeholder="e.g. 28"
-                className={`w-full rounded-lg px-4 py-3 outline-none border bg-opacity-50 ${currentStyles.inputBg} ${currentStyles.border}`}
+                placeholder="First & Last Name"
+                // Removed 'bg-opacity-50' so the background is solid and clear
+                className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${currentStyles.inputBg} ${currentStyles.border}`}
+                value={p1.name}
+                onChange={(e) => setP1({ ...p1, name: e.target.value })}
+                required
               />
             </div>
-            <div>
-              <label className="block text-xs uppercase tracking-widest opacity-60 mb-2">
-                Gender (Optional)
-              </label>
-              <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
-                className={`w-full rounded-lg px-4 py-3 outline-none border bg-opacity-50 ${currentStyles.inputBg} ${currentStyles.border}`}
-              >
-                <option value="">Select...</option>
-                <option value="Female">Female</option>
-                <option value="Male">Male</option>
-                <option value="Non-binary">Non-binary</option>
-                <option value="Other">Other</option>
-              </select>
+
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                type="date"
+                // Removed 'bg-opacity-50' so the background is solid and clear
+                className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${currentStyles.inputBg} ${currentStyles.border}`}
+                value={p1.date}
+                onChange={(e) => setP1({ ...p1, date: e.target.value })}
+                required
+              />
+              <input
+                type="time"
+                // Removed 'bg-opacity-50' so the background is solid and clear
+                className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${currentStyles.inputBg} ${currentStyles.border}`}
+                value={p1.time}
+                onChange={(e) => setP1({ ...p1, time: e.target.value })}
+                required
+              />
             </div>
+
+            <input
+              placeholder="City of Birth (e.g. London, UK)"
+              // Removed 'bg-opacity-50' so the background is solid and clear
+              className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${currentStyles.inputBg} ${currentStyles.border}`}
+              value={p1.city}
+              onChange={(e) => setP1({ ...p1, city: e.target.value })}
+              required
+            />
           </div>
 
+          {/* PERSON 2 DETAILS (Conditional) */}
+          {requiresPartner && (
+            // Removed 'bg-current' and 'bg-opacity-5' to remove the dark tint
+            <div className="space-y-3 p-4 rounded-xl border border-current border-opacity-20">
+              <h3 className="text-xs font-bold uppercase tracking-widest opacity-70">
+                Partner's Birth Details
+              </h3>
+
+              <div className="grid grid-cols-1 gap-3">
+                <input
+                  placeholder="First & Last Name"
+                  // Removed 'bg-opacity-50' so the background is solid and clear
+                  className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${currentStyles.inputBg} ${currentStyles.border}`}
+                  value={p2.name}
+                  onChange={(e) => setP2({ ...p2, name: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  type="date"
+                  // Removed 'bg-opacity-50' so the background is solid and clear
+                  className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${currentStyles.inputBg} ${currentStyles.border}`}
+                  value={p2.date}
+                  onChange={(e) => setP2({ ...p2, date: e.target.value })}
+                  required
+                />
+                <input
+                  type="time"
+                  // Removed 'bg-opacity-50' so the background is solid and clear
+                  className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${currentStyles.inputBg} ${currentStyles.border}`}
+                  value={p2.time}
+                  onChange={(e) => setP2({ ...p2, time: e.target.value })}
+                  required
+                />
+              </div>
+
+              <input
+                placeholder="City of Birth (e.g. New York, USA)"
+                // Removed 'bg-opacity-50' so the background is solid and clear
+                className={`w-full rounded-lg px-3 py-2 text-sm outline-none border ${currentStyles.inputBg} ${currentStyles.border}`}
+                value={p2.city}
+                onChange={(e) => setP2({ ...p2, city: e.target.value })}
+                required
+              />
+            </div>
+          )}
           <div>
             <label className="block text-xs uppercase tracking-widest opacity-60 mb-2">
               Current Situation
