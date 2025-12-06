@@ -63,7 +63,7 @@ const CityAutocomplete = ({
         setSuggestions(data);
         setShow(true);
       } catch (err) {
-        console.error('Autocomplete error:', err);
+        // console.error('Autocomplete error:', err);
       } finally {
         setLoading(false);
       }
@@ -165,7 +165,7 @@ export default function MyChart({
             setChartData(null);
           }
         } catch (error) {
-          console.error('Error fetching chart:', error);
+          //console.error('Error fetching chart:', error);
         } finally {
           setLoading(false);
         }
@@ -206,7 +206,7 @@ export default function MyChart({
 
       setChartData(result.data);
     } catch (error) {
-      console.error(error);
+      //console.error(error);
       alert('Failed to generate chart. Please try again.');
     } finally {
       setGenerating(false);

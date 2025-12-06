@@ -45,7 +45,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.setItem('astromystic-theme', dbTheme);
           }
         } catch (e) {
-          console.error('Theme sync error:', e);
+          // console.error('Theme sync error:', e);
         }
       }
     });
@@ -66,7 +66,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
           { merge: true }
         );
       } catch (e) {
-        console.error('Error saving theme:', e);
+        // console.error('Error saving theme:', e);
       }
     }
   };

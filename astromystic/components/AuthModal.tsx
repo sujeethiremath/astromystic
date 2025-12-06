@@ -87,7 +87,7 @@ export default function AuthModal({ isOpen, onClose, theme }: AuthModalProps) {
         }),
       });
     } catch (err) {
-      console.error('Error syncing user:', err);
+      //console.error('Error syncing user:', err);
     }
   };
 

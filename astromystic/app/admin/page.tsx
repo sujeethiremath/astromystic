@@ -175,7 +175,7 @@ export default function AdminDashboard() {
         setLoading(false);
       }
     } catch (error) {
-      console.error('API Error:', error);
+      //console.error('API Error:', error);
       setLoading(false);
     }
   };
@@ -191,7 +191,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       if (data.charts) setStandaloneCharts(data.charts);
     } catch (e) {
-      console.error(e);
+      //console.error(e);
     }
   };
 
@@ -217,7 +217,7 @@ export default function AdminDashboard() {
       setShowDeleteModal(false);
       setChartToDelete(null);
     } catch (e) {
-      console.error(e);
+      //console.error(e);
       alert('Failed to delete.');
     }
   };
@@ -305,7 +305,7 @@ export default function AdminDashboard() {
         alert('Could not find the reading file for this request.');
       }
     } catch (e) {
-      console.error(e);
+      //console.error(e);
       alert('Error retrieving reading data.');
     }
   };
@@ -375,7 +375,7 @@ export default function AdminDashboard() {
       setIsEditing(false);
       setEditingReadingId(null);
     } catch (error: any) {
-      console.error('Assign Error:', error);
+      //console.error('Assign Error:', error);
       alert(`Error: ${error.message}`);
     } finally {
       setSaving(false);

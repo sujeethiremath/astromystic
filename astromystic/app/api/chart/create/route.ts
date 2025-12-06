@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
-    console.log(`Generating chart for ${uid} in ${city}`);
+    // console.log(`Generating chart for ${uid} in ${city}`);
 
     // 4. Calculations
     const coords = await getCoordinates(city);
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, data: chartData });
   } catch (error: any) {
-    console.error('Chart API Error:', error);
+    //console.error('Chart API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

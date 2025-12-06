@@ -150,16 +150,16 @@ export async function POST(req: NextRequest) {
             </div>
           `,
         });
-        console.log(`📧 Notification sent to ${targetUserEmail}`);
+        //console.log(`📧 Notification sent to ${targetUserEmail}`);
       } catch (emailError) {
-        console.error('Failed to send email notification:', emailError);
+        //console.error('Failed to send email notification:', emailError);
         // We don't fail the whole request if email fails, but we log it.
       }
     }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Assign API Error:', error);
+    //console.error('Assign API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

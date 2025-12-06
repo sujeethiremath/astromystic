@@ -11,10 +11,10 @@ const checkEnvVars = () => {
   if (!process.env.FIREBASE_PRIVATE_KEY) missing.push('FIREBASE_PRIVATE_KEY');
 
   if (missing.length > 0) {
-    console.error(
-      '❌ [FIREBASE ADMIN] Critical Error: Missing Environment Variables:',
-      missing.join(', ')
-    );
+    // console.error(
+    //   '❌ [FIREBASE ADMIN] Critical Error: Missing Environment Variables:',
+    //   missing.join(', ')
+    // );
   }
 };
 
@@ -41,7 +41,7 @@ const getFirebaseAdminApp = () => {
         credential: cert(serviceAccount),
       });
     } catch (error) {
-      console.error('❌ [FIREBASE ADMIN] Initialization Failed.', error);
+      // console.error('❌ [FIREBASE ADMIN] Initialization Failed.', error);
     }
   }
   return null;

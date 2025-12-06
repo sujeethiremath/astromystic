@@ -221,13 +221,13 @@ export async function POST(req: Request) {
           });
         }
       } catch (emailError) {
-        console.error('Failed to send notifications:', emailError);
+        // console.error('Failed to send notifications:', emailError);
       }
     }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Booking API Error:', error);
+    //console.error('Booking API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
