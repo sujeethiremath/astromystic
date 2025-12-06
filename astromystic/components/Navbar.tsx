@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Sun,
   Moon,
@@ -44,6 +44,18 @@ export default function Navbar({
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
+  // --- DEBUG: LOG TOKEN FOR POSTMAN ---
+  useEffect(() => {
+    if (user) {
+      user.getIdToken().then((token) => {
+        console.log('%c MY TOKEN: ', 'background: #222; color: #bada55', token);
+      });
+    } else {
+      console.log('Not Logged In');
+    }
+  }, [user]);
+  // ------------------------------------
+
   const handleNavClick = (id: string) => {
     setIsMenuOpen(false);
 
@@ -75,7 +87,6 @@ export default function Navbar({
       router.push(`/#${id}`);
     }
   };
-
   return (
     <nav
       className={`fixed top-0 w-full z-50 border-b border-opacity-10 border-current transition-all duration-300 ${currentStyles.navBg}`}

@@ -44,20 +44,30 @@ export default function About({ theme }: AboutProps) {
           {/* Bio */}
           <div className="space-y-6 opacity-80 leading-relaxed text-base md:text-lg font-light">
             <p>
-              Welcome. I am a guide for those seeking clarity in the stars. My
-              practice bridges ancient celestial wisdom with practical, modern
-              guidance to help you understand yourself and the people in your
-              life.
+              As someone who has always struggled with forming and maintaining
+              relationships, and understanding myself, purpose, intentions in
+              life, astrology has been a tool I discovered at the time I needed
+              it the most; it helped rationalize what was happening, explain my
+              relationship dynamics through synastry; understand what my purpose
+              is and what are potential challenges in the way of getting to the
+              success that I desire, natal chart astrology helped me with that.
+              I got inspired to learn astrology and raise awareness of how
+              applicable and practical a tool it can be, if we approach it that
+              way. I do astrology because it helps me, and I want you to start
+              using it in your relationships and as a tool to work on yourself.
             </p>
             <p>
-              I believe your natal chart is not a fixed script of fate, but a
-              dynamic map of potential. Whether you are navigating complex
-              relationship dynamics or seeking your true purpose, I am here to
-              help you{' '}
-              <strong className="opacity-100 font-medium">
-                claim your power back
-              </strong>
-              .
+              My name is Gulnara. I am 31. Even though I have been pursuing my
+              degree in Political Science, BA and MA, it did not stop me from
+              acquiring hobbies, and astrology being one of them. Though I
+              believed and followed astrology for my entire life, when I decided
+              to make a move to the US in 2019, I took astrology and tarot
+              seriously. As for tarot, having a strong 8th house and other
+              psychic placements, it was easy to learn on my own; as for
+              astrology, I was enrolled in an astrology course by Pavel Chudinov
+              and completed it in 2021. I further keep updating and adding more
+              to my knowledge; I specifically focus on expanding my expertise in
+              aspect astrology and aspects in synastry.
             </p>
           </div>
 
