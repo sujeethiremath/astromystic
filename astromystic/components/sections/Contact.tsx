@@ -70,7 +70,7 @@ export default function Contact({ theme }: ContactProps) {
         });
       }
     } catch (error: any) {
-      console.error(error);
+      //console.error(error);
       setStatus('error');
 
       // TRACK EVENT: Network Error

@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'User updated', role });
     }
   } catch (error: any) {
-    console.error('❌ Error in /api/users/sync:', error);
+    //console.error('❌ Error in /api/users/sync:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

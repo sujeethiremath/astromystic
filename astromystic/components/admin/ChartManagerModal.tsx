@@ -63,7 +63,7 @@ const CityAutocomplete = ({ value, onChange, onSelect, styles }: any) => {
         setSuggestions(data);
         setShow(true);
       } catch (err) {
-        console.error('Autocomplete error:', err);
+        // console.error('Autocomplete error:', err);
       } finally {
         setLoading(false);
       }
@@ -199,7 +199,7 @@ export default function ChartManagerModal({
         alert('Error: ' + data.error);
       }
     } catch (err) {
-      console.error(err);
+      //console.error(err);
     } finally {
       setLoading(false);
     }

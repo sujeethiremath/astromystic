@@ -16,7 +16,7 @@ export const getCoordinates = async (city: string) => {
 
       if (cacheSnap.exists) {
         const data = cacheSnap.data();
-        console.log(`📍 Cache hit for: ${city}`);
+        //console.log(`📍 Cache hit for: ${city}`);
         return {
           lat: data?.lat,
           lng: data?.lng,
@@ -26,7 +26,7 @@ export const getCoordinates = async (city: string) => {
     }
 
     // B. FETCH EXTERNAL API (OpenStreetMap)
-    console.log(`🌍 Fetching OSM for: ${city}`);
+    //console.log(`🌍 Fetching OSM for: ${city}`);
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`,
       { headers: { 'User-Agent': 'AstromysticApp/1.0' } }
@@ -55,7 +55,7 @@ export const getCoordinates = async (city: string) => {
 
     return result;
   } catch (error) {
-    console.error('Geocoding error:', error);
+    // console.error('Geocoding error:', error);
     // Fallback (New York) if API fails, to prevent app crash
     return { lat: 40.7128, lng: -74.006, formattedAddress: city };
   }

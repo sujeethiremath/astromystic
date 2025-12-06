@@ -15,7 +15,7 @@ export const trackEvent = (name: string, properties?: Record<string, any>) => {
     try {
       mixpanel.track(name, properties);
     } catch (error) {
-      console.error('Mixpanel Error:', error);
+      // console.error('Mixpanel Error:', error);
     }
   }
 };

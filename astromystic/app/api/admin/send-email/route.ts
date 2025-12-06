@@ -91,10 +91,10 @@ export async function POST(req: NextRequest) {
         </div>
       `,
     });
-    console.log('Email sent');
+    //console.log('Email sent');
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('Email API Error:', error);
+    //console.error('Email API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

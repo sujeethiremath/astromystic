@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     if (!endpointSecret) throw new Error('Missing Stripe Webhook Secret');
     event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
   } catch (err: any) {
-    console.error(`⚠️  Webhook signature verification failed.`, err.message);
+    //error(`⚠️  Webhook signature verification failed.`, err.message);
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
 
@@ -45,7 +45,7 @@ export async function POST(req: Request) {
     } = session.metadata || {};
 
     if (userId && serviceTitle && adminDb) {
-      console.log(`💰 Payment successful for ${serviceTitle}`);
+      //console.log(`💰 Payment successful for ${serviceTitle}`);
 
       // 2. Parse JSON strings back to objects
       // Stripe metadata is Key-Value (string-string), so we must parse the JSON we stored earlier
@@ -213,7 +213,7 @@ export async function POST(req: Request) {
             });
           }
         } catch (e) {
-          console.error('Email failed', e);
+          //console.error('Email failed', e);
         }
       }
     }

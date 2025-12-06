@@ -78,7 +78,7 @@ export default function Dashboard() {
             return;
           }
         } catch (e) {
-          console.error('Role check error', e);
+          // console.error('Role check error', e);
         }
         setUser(currentUser);
         setLoading(false);

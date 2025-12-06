@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     const contactEmail = process.env.CONTACT_EMAIL;
 
     if (!apiKey) {
-      console.error('❌ ERROR: RESEND_API_KEY is missing in .env.local');
+      //console.error('❌ ERROR: RESEND_API_KEY is missing in .env.local');
       return NextResponse.json(
         { error: 'Server Config Error: Missing API Key' },
         { status: 500 }
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     }
 
     if (!contactEmail) {
-      console.error('❌ ERROR: CONTACT_EMAIL is missing in .env.local');
+      //console.error('❌ ERROR: CONTACT_EMAIL is missing in .env.local');
       return NextResponse.json(
         { error: 'Server Config Error: Missing Contact Email' },
         { status: 500 }
@@ -90,13 +90,13 @@ export async function POST(req: Request) {
     });
 
     if (error) {
-      console.error('❌ Resend API Error:', error);
+      // console.error('❌ Resend API Error:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
-    console.error('❌ Server Error:', error);
+    //console.error('❌ Server Error:', error);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

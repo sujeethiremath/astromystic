@@ -57,7 +57,7 @@ export default function ReadingsList({
           },
           (error) => {
             if (error.code === 'permission-denied') return;
-            console.error('Error fetching readings:', error);
+            // console.error('Error fetching readings:', error);
             setLoading(false);
           }
         );

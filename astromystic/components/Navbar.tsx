@@ -44,18 +44,6 @@ export default function Navbar({
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // --- DEBUG: LOG TOKEN FOR POSTMAN ---
-  useEffect(() => {
-    if (user) {
-      user.getIdToken().then((token) => {
-        console.log('%c MY TOKEN: ', 'background: #222; color: #bada55', token);
-      });
-    } else {
-      console.log('Not Logged In');
-    }
-  }, [user]);
-  // ------------------------------------
-
   const handleNavClick = (id: string) => {
     setIsMenuOpen(false);
 

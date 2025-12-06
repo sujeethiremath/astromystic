@@ -76,7 +76,7 @@ export default function BookingModal({
       // Redirect user to Stripe to pay
       window.location.href = data.url;
     } catch (error: any) {
-      console.error('Booking Error:', error);
+      //console.error('Booking Error:', error);
       alert(error.message || 'Failed to process request.');
       setLoading(false);
     }

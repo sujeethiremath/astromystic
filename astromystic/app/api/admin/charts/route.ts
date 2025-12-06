@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     if (!duplicateQuery.empty) {
       const existingDoc = duplicateQuery.docs[0];
-      console.log(`♻️ Found existing chart for ${firstName} ${lastName}`);
+      //console.log(`♻️ Found existing chart for ${firstName} ${lastName}`);
       // Return the existing chart data immediately
       return NextResponse.json({
         success: true,
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, id: docRef.id, ...chartData });
   } catch (e: any) {
-    console.error('Chart API Error:', e);
+    //console.error('Chart API Error:', e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }

@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ users });
   } catch (error: any) {
-    console.error('Admin API Error:', error);
+    //console.error('Admin API Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
