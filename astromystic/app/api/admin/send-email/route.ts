@@ -44,16 +44,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
 
-    // 4. Send Email via Resend
-    // NOTE: Change 'onboarding@resend.dev' to 'gulnara@practicalloveastrology.com'
-    // once you have verified your domain in the Resend Dashboard.
-    const FROM_ADDRESS =
-      'Gulnara from Practical Love Astrology <gulnara@practicalloveastrology.com>';
-
     await resend.emails.send({
-      from: FROM_ADDRESS,
+      from: 'Practical Love Astrology <gulnara@practicalloveastrology.com>',
       to: [targetEmail],
-      replyTo: 'hiremath09@gmail.com', // Replies go to your Gmail!
+      replyTo: 'grobertovna127@gmail.com', // Replies go to your Gmail!
       subject: subject,
       html: `
         <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">

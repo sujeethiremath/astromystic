@@ -26,6 +26,7 @@ import {
   Send,
   FileText,
   PlusCircle,
+  Edit,
 } from 'lucide-react';
 import { User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
@@ -94,6 +95,10 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+  // Edit Mode State
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingReadingId, setEditingReadingId] = useState<string | null>(null);
+
   // Data State
   const [users, setUsers] = useState<UserData[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
@@ -139,10 +144,7 @@ export default function AdminDashboard() {
       if (!user) return router.push('/');
       setCurrentUser(user);
 
-      const allowedEmails = [
-        'sujeetshiremath@gmail.com',
-        'hiremath09@gmail.com',
-      ];
+      const allowedEmails = ['grobertovna127@gmail.com'];
       if (user.email && allowedEmails.includes(user.email)) {
         await fetchUsers(user);
       } else {
@@ -268,7 +270,47 @@ export default function AdminDashboard() {
     setVideoUrl('');
   };
 
-  // 5. SUBMIT ASSIGNMENT (Single Video)
+  // 5. INIT EDIT (History)
+  const initEdit = async (req: RequestData) => {
+    if (!selectedUser) return;
+
+    try {
+      // Find the reading linked to this request
+      const q = query(
+        collection(db, 'users', selectedUser.uid, 'readings'),
+        where('requestId', '==', req.id),
+        orderBy('createdAt', 'desc') // Get latest
+      );
+      const snapshot = await getDocs(q);
+
+      if (!snapshot.empty) {
+        const readingDoc = snapshot.docs[0];
+        const data = readingDoc.data();
+
+        setIsEditing(true);
+        setEditingReadingId(readingDoc.id);
+        setSelectedRequest(req);
+
+        // Populate Form
+        setReadingTitle(data.title || '');
+        setReadingDate(data.date || '');
+
+        // Handle both single URL (new) and array (old) formats
+        if (data.videoUrl) {
+          setVideoUrl(data.videoUrl);
+        } else if (data.videos && data.videos.length > 0) {
+          setVideoUrl(data.videos[0].url);
+        }
+      } else {
+        alert('Could not find the reading file for this request.');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error retrieving reading data.');
+    }
+  };
+
+  // 5. SUBMIT ASSIGNMENT (Handles Create OR Update)
   const handleCompleteAssignment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser || !currentUser || !readingTitle || !videoUrl) return;
@@ -276,36 +318,65 @@ export default function AdminDashboard() {
     setSaving(true);
     try {
       const token = await currentUser.getIdToken();
-      const res = await fetch('/api/admin/assign', {
+
+      // A. Choose Endpoint: Edit vs Assign
+      const endpoint = isEditing
+        ? '/api/admin/edit-reading'
+        : '/api/admin/assign';
+
+      // B. Build Payload
+      const payload: any = {
+        targetUid: selectedUser.uid,
+        readingTitle,
+        readingDate,
+        videoUrl,
+        // Send array format too just in case backend expects it
+        videos: [{ title: readingTitle, url: videoUrl }],
+      };
+
+      // C. Attach Context IDs
+      if (isEditing) {
+        payload.readingId = editingReadingId;
+      } else {
+        payload.requestId = selectedRequest?.id;
+      }
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          targetUid: selectedUser.uid,
-          readingTitle,
-          readingDate,
-          videoUrl,
-          requestId: selectedRequest?.id,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error('Failed to assign');
+      if (!res.ok) throw new Error(result.error || 'Failed');
 
-      setModalMessage(
-        result.remaining > 0
-          ? `Saved! ${result.remaining} readings remaining.`
-          : `Reading assigned! Request complete.`
-      );
+      // D. Success Feedback
+      if (isEditing) {
+        setModalMessage('Reading updated successfully.');
+      } else if (result.remaining > 0) {
+        setModalMessage(
+          `Saved! ${result.remaining} readings remaining in this package.`
+        );
+      } else {
+        setModalMessage(
+          `Reading assigned! Request is fully complete and moved to History.`
+        );
+      }
+
       setShowSuccessModal(true);
-      trackEvent('Admin assigned the reading', { user: selectedUser.uid });
+
+      // E. Cleanup
       setReadingTitle('');
       setVideoUrl('');
       setSelectedRequest(null);
-    } catch (error) {
-      alert('Failed to assign.');
+      setIsEditing(false);
+      setEditingReadingId(null);
+    } catch (error: any) {
+      console.error('Assign Error:', error);
+      alert(`Error: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -642,10 +713,27 @@ export default function AdminDashboard() {
                           >
                             {req.service}
                           </span>
-                          <span className="text-xs opacity-50 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />{' '}
-                            {new Date(req.createdAt).toLocaleDateString()}
-                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs opacity-50 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />{' '}
+                              {new Date(req.createdAt).toLocaleDateString()}
+                            </span>
+
+                            {/* ADD THIS EDIT BUTTON */}
+                            {activeTab === 'history' && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  initEdit(req);
+                                }}
+                                className="p-1.5 rounded hover:bg-current hover:bg-opacity-10 text-indigo-400 hover:text-indigo-300"
+                                title="Edit Reading"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         </div>
                         <div className="grid md:grid-cols-2 gap-4 mt-3">
                           <div>
@@ -669,25 +757,41 @@ export default function AdminDashboard() {
                         <div className="mt-3 pt-3 border-t border-current border-opacity-10">
                           {/* NEW: Show detailed birth data if available */}
                           {req.p1Details ? (
-                            <div className="grid grid-cols-2 gap-2 text-xs mb-2">
-                              <div className="p-2 rounded bg-current bg-opacity-5">
-                                <span className="font-bold block mb-1 opacity-70">
-                                  Person 1 ({req.p1Details.name})
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs mb-3">
+                              {/* Person 1 Box */}
+                              <div
+                                className={`p-3 rounded-lg border ${theme === 'sun' ? 'bg-white border-amber-200' : 'bg-slate-900 border-slate-700'}`}
+                              >
+                                <span
+                                  className={`font-bold block mb-1 uppercase tracking-wider ${theme === 'sun' ? 'text-amber-700' : 'text-indigo-400'}`}
+                                >
+                                  Person 1
                                 </span>
-                                <div className="opacity-50">
-                                  {req.p1Details.date} @ {req.p1Details.time}
+                                <div className="font-bold text-sm mb-1">
+                                  {req.p1Details.name}
+                                </div>
+                                <div className="opacity-90">
+                                  {req.p1Details.date} at {req.p1Details.time}
                                   <br />
                                   {req.p1Details.city}
                                 </div>
                               </div>
 
+                              {/* Person 2 Box (Only if exists) */}
                               {req.p2Details && req.p2Details.name && (
-                                <div className="p-2 rounded bg-current bg-opacity-5">
-                                  <span className="font-bold block mb-1 opacity-70">
-                                    Person 2 ({req.p2Details.name})
+                                <div
+                                  className={`p-3 rounded-lg border ${theme === 'sun' ? 'bg-white border-amber-200' : 'bg-slate-900 border-slate-700'}`}
+                                >
+                                  <span
+                                    className={`font-bold block mb-1 uppercase tracking-wider ${theme === 'sun' ? 'text-amber-700' : 'text-indigo-400'}`}
+                                  >
+                                    Person 2
                                   </span>
-                                  <div className="opacity-50">
-                                    {req.p2Details.date} @ {req.p2Details.time}
+                                  <div className="font-bold text-sm mb-1">
+                                    {req.p2Details.name}
+                                  </div>
+                                  <div className="opacity-90">
+                                    {req.p2Details.date} at {req.p2Details.time}
                                     <br />
                                     {req.p2Details.city}
                                   </div>
