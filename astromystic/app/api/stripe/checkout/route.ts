@@ -5,7 +5,7 @@ import { STRIPE_PRICES } from '@/lib/stripe-config';
 
 export const runtime = 'nodejs';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_mock_key_for_build', {
   apiVersion: '2025-11-17.clover', // Ensure this matches your Stripe version
 });
 
@@ -62,8 +62,8 @@ export async function POST(req: Request) {
         userName: decodedToken.name || '',
 
         // Truncate long text to fit Stripe limits (500 chars per key)
-        situation: situation.substring(0, 450),
-        question: question.substring(0, 450),
+        situation: (situation || '').substring(0, 450),
+        question: (question || '').substring(0, 450),
 
         // Store birth details as JSON strings
         p1Details: JSON.stringify(p1Details || {}),

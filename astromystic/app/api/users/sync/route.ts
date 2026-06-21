@@ -65,21 +65,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'User created', role });
     }
 
-    // 5. If user exists, UPDATE specific fields
+    // 5. If user exists, UPDATE specific fields and synchronize role
     else {
       const existingRole = userSnap.data()?.role || 'user';
 
-      // Upgrade to admin if email is in the list but role isn't set yet
+      // Source of truth for admin role is the ADMIN_EMAILS environment variable.
+      // If the email is in the list, their role is upgraded/kept as 'admin'.
+      // If the email is NOT in the list, their role is downgraded/kept as 'user'.
+      let updatedRole = existingRole;
       if (role === 'admin' && existingRole !== 'admin') {
-        await userRef.update({ role: 'admin' });
-        role = 'admin';
-      } else {
-        role = existingRole;
+        updatedRole = 'admin';
+      } else if (role !== 'admin' && existingRole === 'admin') {
+        updatedRole = 'user';
       }
 
-      await userRef.update(userData);
+      await userRef.update({
+        ...userData,
+        role: updatedRole,
+      });
 
-      return NextResponse.json({ message: 'User updated', role });
+      return NextResponse.json({ message: 'User updated', role: updatedRole });
     }
   } catch (error: any) {
     //console.error('❌ Error in /api/users/sync:', error);

@@ -7,12 +7,12 @@ import { Resend } from 'resend';
 export const runtime = 'nodejs';
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_mock_key_for_build', {
   apiVersion: '2025-11-17.clover', // Update this if your local Stripe CLI version differs
 });
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key_for_build');
 
 export async function POST(req: Request) {
   const body = await req.text();
@@ -73,78 +73,83 @@ export async function POST(req: Request) {
         });
 
       // 4. Send Emails (Admin Alert + User Receipt)
-      if (process.env.RESEND_API_KEY && userEmail) {
+      if (process.env.RESEND_API_KEY) {
         const SENDER =
           'Practical Love Astrology <readings@practicalloveastrology.com>';
         const DASHBOARD_URL = process.env.NEXT_PUBLIC_BASE_URL
           ? `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard`
           : 'https://practicalloveastrology.com/dashboard';
 
+        // --- A. EMAIL TO USER (RECEIPT) ---
+        if (userEmail) {
+          try {
+            await resend.emails.send({
+              from: SENDER,
+              to: [userEmail],
+              subject: `Booking Confirmed: ${serviceTitle}`,
+              html: `
+                  <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #4F46E5;">Booking Confirmed</h2>
+                    <p>Hello,</p>
+                    <p>Thank you for your payment! Gulnara has received your details for <strong>${serviceTitle}</strong>.</p>
+                    
+                    <!-- Payment Receipt Box -->
+                    <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10B981;">
+                      <p style="margin: 0; font-weight: bold; color: #555; font-size: 12px; text-transform: uppercase;">Payment Receipt</p>
+                      <p style="margin: 5px 0 0; font-size: 18px;">Amount Paid: <strong>$${session.amount_total ? session.amount_total / 100 : '0'}</strong></p>
+                      <p style="margin: 5px 0 0; font-size: 12px; color: #888;">Transaction ID: ${session.id}</p>
+                    </div>
+
+                    <p><strong>Next Steps:</strong> You will receive an email notification as soon as your reading video is uploaded to your dashboard.</p>
+
+                    <div style="margin-top: 30px;">
+                      <a href="${DASHBOARD_URL}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                        Go to My Dashboard
+                      </a>
+                    </div>
+
+                    <br /><!-- EMAIL SIGNATURE -->
+  <div style="opacity:0.9; margin-top:30px; padding-top:20px; border-top:1px solid #eee;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse; line-height:1;">
+      <tr>
+        <!-- Icons Column -->
+        <td style="padding-right:10px; border-right:2px solid #ccc; text-align:center; vertical-align:middle;">
+          <div style="font-size:18px; line-height:18px;">☀️</div>
+          <div style="font-size:14px; line-height:14px;">🌙⭐</div>
+          <div style="font-size:18px; line-height:18px;">⭐</div>
+        </td>
+        <!-- Brand Column -->
+        <td style="padding-left:10px; vertical-align:middle;">
+          <!-- Name -->
+          <div style="margin:0; padding:0; line-height:1;">
+            <span style="font-family:'Brush Script MT','Comic Sans MS',cursive; font-size:26px; font-style:italic; line-height:26px;">gul</span>
+            <span style="font-family:'Times New Roman',serif; font-size:22px; font-weight:bold; letter-spacing:1px; line-height:22px;">NARA</span>
+             <!-- Astrology (fixed to always show) -->
+          <span style="
+            font-family:Arial, sans-serif;
+            font-size:22px;
+            line-height:22px;
+            text-transform:uppercase;
+            color:#bdbdbd;
+            display:block;
+          ">
+            Astrology
+          </span>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+                  </div>
+                `,
+            });
+          } catch (e) {
+            //console.error('User receipt email failed', e);
+          }
+        }
+
+        // --- B. EMAIL TO ADMIN (ALERT) ---
         try {
-          // --- A. EMAIL TO USER (RECEIPT) ---
-          await resend.emails.send({
-            from: SENDER,
-            to: [userEmail],
-            subject: `Booking Confirmed: ${serviceTitle}`,
-            html: `
-                <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
-                  <h2 style="color: #4F46E5;">Booking Confirmed</h2>
-                  <p>Hello,</p>
-                  <p>Thank you for your payment! Gulnara has received your details for <strong>${serviceTitle}</strong>.</p>
-                  
-                  <!-- Payment Receipt Box -->
-                  <div style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10B981;">
-                    <p style="margin: 0; font-weight: bold; color: #555; font-size: 12px; text-transform: uppercase;">Payment Receipt</p>
-                    <p style="margin: 5px 0 0; font-size: 18px;">Amount Paid: <strong>$${session.amount_total ? session.amount_total / 100 : '0'}</strong></p>
-                    <p style="margin: 5px 0 0; font-size: 12px; color: #888;">Transaction ID: ${session.id}</p>
-                  </div>
-
-                  <p><strong>Next Steps:</strong> You will receive an email notification as soon as your reading video is uploaded to your dashboard.</p>
-
-                  <div style="margin-top: 30px;">
-                    <a href="${DASHBOARD_URL}" style="background-color: #4F46E5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                      Go to My Dashboard
-                    </a>
-                  </div>
-
-                  <br /><!-- EMAIL SIGNATURE -->
-<div style="opacity:0.9; margin-top:30px; padding-top:20px; border-top:1px solid #eee;">
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse; line-height:1;">
-    <tr>
-      <!-- Icons Column -->
-      <td style="padding-right:10px; border-right:2px solid #ccc; text-align:center; vertical-align:middle;">
-        <div style="font-size:18px; line-height:18px;">☀️</div>
-        <div style="font-size:14px; line-height:14px;">🌙⭐</div>
-        <div style="font-size:18px; line-height:18px;">⭐</div>
-      </td>
-      <!-- Brand Column -->
-      <td style="padding-left:10px; vertical-align:middle;">
-        <!-- Name -->
-        <div style="margin:0; padding:0; line-height:1;">
-          <span style="font-family:'Brush Script MT','Comic Sans MS',cursive; font-size:26px; font-style:italic; line-height:26px;">gul</span>
-          <span style="font-family:'Times New Roman',serif; font-size:22px; font-weight:bold; letter-spacing:1px; line-height:22px;">NARA</span>
-           <!-- Astrology (fixed to always show) -->
-        <span style="
-        
-          font-family:Arial, sans-serif;
-          font-size:22px;
-          line-height:22px;
-          text-transform:uppercase;
-          color:#bdbdbd;
-          display:block;
-        ">
-          Astrology
-        </span>
-        </div>
-      </td>
-    </tr>
-  </table>
-</div>
-                </div>
-              `,
-          });
-
-          // --- B. EMAIL TO ADMIN (ALERT) ---
           const admins = (process.env.ADMIN_EMAILS || '')
             .split(',')
             .map((e) => e.trim())
@@ -166,7 +171,7 @@ export async function POST(req: Request) {
               html: `
                    <div style="font-family: sans-serif; color: #333;">
                      <h2>New Paid Request</h2>
-                     <p><strong>Client:</strong> ${userEmail}</p>
+                     <p><strong>Client:</strong> ${userEmail || 'N/A'}</p>
                      <p><strong>Service:</strong> ${serviceTitle}</p>
                      <hr/>
                      <p><strong>Person 1:</strong> ${p1Str}</p>
@@ -177,43 +182,42 @@ export async function POST(req: Request) {
                      <a href="${process.env.NEXT_PUBLIC_BASE_URL}/admin">Go to Admin Dashboard</a>
                    </div>
                    <!-- EMAIL SIGNATURE -->
-<div style="opacity:0.9; margin-top:30px; padding-top:20px; border-top:1px solid #eee;">
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse; line-height:1;">
-    <tr>
-      <!-- Icons Column -->
-      <td style="padding-right:10px; border-right:2px solid #ccc; text-align:center; vertical-align:middle;">
-        <div style="font-size:18px; line-height:18px;">☀️</div>
-        <div style="font-size:14px; line-height:14px;">🌙⭐</div>
-        <div style="font-size:18px; line-height:18px;">⭐</div>
-      </td>
-      <!-- Brand Column -->
-      <td style="padding-left:10px; vertical-align:middle;">
-        <!-- Name -->
-        <div style="margin:0; padding:0; line-height:1;">
-          <span style="font-family:'Brush Script MT','Comic Sans MS',cursive; font-size:26px; font-style:italic; line-height:26px;">gul</span>
-          <span style="font-family:'Times New Roman',serif; font-size:22px; font-weight:bold; letter-spacing:1px; line-height:22px;">NARA</span>
-           <!-- Astrology (fixed to always show) -->
-        <span style="
-        
-          font-family:Arial, sans-serif;
-          font-size:22px;
-          line-height:22px;
-          text-transform:uppercase;
-          color:#bdbdbd;
-          display:block;
-        ">
-          Astrology
-        </span>
-        </div>
-      </td>
-    </tr>
-  </table>
-</div>
+  <div style="opacity:0.9; margin-top:30px; padding-top:20px; border-top:1px solid #eee;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:collapse; line-height:1;">
+      <tr>
+        <!-- Icons Column -->
+        <td style="padding-right:10px; border-right:2px solid #ccc; text-align:center; vertical-align:middle;">
+          <div style="font-size:18px; line-height:18px;">☀️</div>
+          <div style="font-size:14px; line-height:14px;">🌙⭐</div>
+          <div style="font-size:18px; line-height:18px;">⭐</div>
+        </td>
+        <!-- Brand Column -->
+        <td style="padding-left:10px; vertical-align:middle;">
+          <!-- Name -->
+          <div style="margin:0; padding:0; line-height:1;">
+            <span style="font-family:'Brush Script MT','Comic Sans MS',cursive; font-size:26px; font-style:italic; line-height:26px;">gul</span>
+            <span style="font-family:'Times New Roman',serif; font-size:22px; font-weight:bold; letter-spacing:1px; line-height:22px;">NARA</span>
+             <!-- Astrology (fixed to always show) -->
+          <span style="
+            font-family:Arial, sans-serif;
+            font-size:22px;
+            line-height:22px;
+            text-transform:uppercase;
+            color:#bdbdbd;
+            display:block;
+          ">
+            Astrology
+          </span>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
                  `,
             });
           }
         } catch (e) {
-          //console.error('Email failed', e);
+          //console.error('Admin alert email failed', e);
         }
       }
     }

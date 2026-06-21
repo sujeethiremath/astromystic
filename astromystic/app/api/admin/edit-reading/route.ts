@@ -34,12 +34,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Get Data
-    const { targetUid, readingId, readingTitle, readingDate, videos } =
+    const { targetUid, readingId, readingTitle, readingDate, videoUrl, videos } =
       await req.json();
 
-    if (!targetUid || !readingId || !videos) {
+    if (!targetUid || !readingId) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
     }
+
+    const resolvedVideoUrl = videoUrl || (videos && videos.length > 0 ? videos[0].url : '');
 
     // 3. Update the Reading Doc
     await adminDb
@@ -50,7 +52,8 @@ export async function POST(req: NextRequest) {
       .update({
         title: readingTitle,
         date: readingDate,
-        videos: videos,
+        videoUrl: resolvedVideoUrl,
+        videos: videos || [],
         lastUpdated: new Date().toISOString(),
       });
 

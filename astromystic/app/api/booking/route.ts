@@ -6,7 +6,7 @@ import { Resend } from 'resend';
 export const runtime = 'nodejs';
 
 // Initialize Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resend = new Resend(process.env.RESEND_API_KEY || 're_mock_key_for_build');
 
 export async function POST(req: Request) {
   try {
@@ -88,9 +88,16 @@ export async function POST(req: Request) {
         .map((e) => e.trim())
         .filter((e) => e.length > 0);
 
+      // A. Notify Admins
       try {
-        // A. Notify Admins
         if (adminEmails.length > 0) {
+          const p1Str = p1Details?.name
+            ? `${p1Details.name} (${p1Details.date} @ ${p1Details.time}, ${p1Details.city})`
+            : 'N/A';
+          const p2Str = p2Details?.name
+            ? `${p2Details.name} (${p2Details.date} @ ${p2Details.time}, ${p2Details.city})`
+            : 'N/A';
+
           await resend.emails.send({
             from: SENDER_EMAIL,
             to: adminEmails,
@@ -101,9 +108,10 @@ export async function POST(req: Request) {
                 <h2 style="color: #4F46E5;">New Reading Request</h2>
                 <p><strong>Client:</strong> ${decodedToken.email}</p>
                 <p><strong>Service:</strong> ${service}</p>
-                <p><strong>Details:</strong> Details Person 1: ${p1Details || 'N/A'} | Details Person 2: ${p2Details || 'N/A'}</p>
                 
                 <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+                <p><strong>Person 1:</strong> ${p1Str}</p>
+                <p><strong>Person 2:</strong> ${p2Str}</p>
                 
                 <h3 style="margin-bottom: 5px;">Current Situation:</h3>
                 <p style="background: #f4f4f4; padding: 15px; border-radius: 5px; white-space: pre-wrap;">${situation}</p>
@@ -157,9 +165,13 @@ export async function POST(req: Request) {
             `,
           });
         }
+      } catch (emailError) {
+        // console.error('Failed to send admin notifications:', emailError);
+      }
 
-        // B. Notify User (Receipt)
-        if (decodedToken.email) {
+      // B. Notify User (Receipt)
+      if (decodedToken.email) {
+        try {
           await resend.emails.send({
             from: SENDER_EMAIL,
             to: [decodedToken.email],
@@ -219,9 +231,9 @@ export async function POST(req: Request) {
               </div>
             `,
           });
+        } catch (emailError) {
+          // console.error('Failed to send user receipt:', emailError);
         }
-      } catch (emailError) {
-        // console.error('Failed to send notifications:', emailError);
       }
     }
 

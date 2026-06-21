@@ -178,6 +178,12 @@ export const calculateChart = (utcDate: Date, lat: number, lng: number) => {
 
   const risingIndex = ZODIAC_SIGNS.indexOf(risingData.sign);
 
+  const mercuryData = getPlanetPosition(Astronomy.Body.Mercury);
+  const venusData = getPlanetPosition(Astronomy.Body.Venus);
+  const marsData = getPlanetPosition(Astronomy.Body.Mars);
+  const jupiterData = getPlanetPosition(Astronomy.Body.Jupiter);
+  const saturnData = getPlanetPosition(Astronomy.Body.Saturn);
+
   return {
     sun: {
       ...sunData,
@@ -187,11 +193,26 @@ export const calculateChart = (utcDate: Date, lat: number, lng: number) => {
       ...moonData,
       house: getHouse(ZODIAC_SIGNS.indexOf(moonData.sign), risingIndex),
     },
-    mercury: { ...getPlanetPosition(Astronomy.Body.Mercury), house: 0 },
-    venus: { ...getPlanetPosition(Astronomy.Body.Venus), house: 0 },
-    mars: { ...getPlanetPosition(Astronomy.Body.Mars), house: 0 },
-    jupiter: { ...getPlanetPosition(Astronomy.Body.Jupiter), house: 0 },
-    saturn: { ...getPlanetPosition(Astronomy.Body.Saturn), house: 0 },
+    mercury: {
+      ...mercuryData,
+      house: getHouse(ZODIAC_SIGNS.indexOf(mercuryData.sign), risingIndex),
+    },
+    venus: {
+      ...venusData,
+      house: getHouse(ZODIAC_SIGNS.indexOf(venusData.sign), risingIndex),
+    },
+    mars: {
+      ...marsData,
+      house: getHouse(ZODIAC_SIGNS.indexOf(marsData.sign), risingIndex),
+    },
+    jupiter: {
+      ...jupiterData,
+      house: getHouse(ZODIAC_SIGNS.indexOf(jupiterData.sign), risingIndex),
+    },
+    saturn: {
+      ...saturnData,
+      house: getHouse(ZODIAC_SIGNS.indexOf(saturnData.sign), risingIndex),
+    },
     rising: { ...risingData, house: 1 },
   };
 };

@@ -35,6 +35,7 @@ import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import {
   collection,
+  collectionGroup,
   getDocs,
   addDoc,
   query,
@@ -138,6 +139,9 @@ export default function AdminDashboard() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [chartToDelete, setChartToDelete] = useState<string | null>(null);
 
+  // NEW: Real-time pending requests count map (userId -> count)
+  const [pendingRequestsMap, setPendingRequestsMap] = useState<Record<string, number>>({});
+
   // 1. INITIAL AUTH CHECK
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -224,6 +228,37 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (currentUser) fetchStandaloneCharts();
+  }, [currentUser]);
+
+  // NEW: Real-time listener for all pending requests to update counts for badges
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const q = query(
+      collectionGroup(db, 'requests'),
+      where('status', '==', 'pending')
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const counts: Record<string, number> = {};
+        snapshot.docs.forEach((doc) => {
+          const data = doc.data();
+          const userId = data.userId || doc.ref.parent.parent?.id;
+          if (userId) {
+            counts[userId] = (counts[userId] || 0) + 1;
+          }
+        });
+        setPendingRequestsMap(counts);
+      },
+      (err) => {
+        if (err.code !== 'permission-denied')
+          console.warn('Pending requests count snapshot error:', err.message);
+      }
+    );
+
+    return () => unsubscribe();
   }, [currentUser]);
 
   // 3. FETCH REQUESTS (Real-time Listener)
@@ -618,10 +653,17 @@ export default function AdminDashboard() {
                 className={`w-full text-left p-3 rounded-lg transition-all border border-transparent group ${selectedUser?.uid === user.uid ? current.listActive : current.listHover}`}
               >
                 <div className="flex justify-between items-start">
-                  <div className="font-bold text-sm truncate">
-                    {user.firstName
-                      ? `${user.firstName} ${user.lastName}`
-                      : user.displayName || user.email}
+                  <div className="font-bold text-sm truncate flex items-center gap-1.5">
+                    <span>
+                      {user.firstName
+                        ? `${user.firstName} ${user.lastName}`
+                        : user.displayName || user.email}
+                    </span>
+                    {pendingRequestsMap[user.uid] > 0 && (
+                      <span className="bg-rose-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full flex items-center justify-center min-w-[15px] h-[15px]" title={`${pendingRequestsMap[user.uid]} pending request(s)`}>
+                        {pendingRequestsMap[user.uid]}
+                      </span>
+                    )}
                   </div>
                   {(user.age || user.gender) && (
                     <span className="text-[10px] opacity-50 border border-current rounded px-1 ml-2 whitespace-nowrap">
