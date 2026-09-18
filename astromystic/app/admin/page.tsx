@@ -147,13 +147,7 @@ export default function AdminDashboard() {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) return router.push('/');
       setCurrentUser(user);
-
-      const allowedEmails = ['grobertovna127@gmail.com'];
-      if (user.email && allowedEmails.includes(user.email)) {
-        await fetchUsers(user);
-      } else {
-        await fetchUsers(user);
-      }
+      await fetchUsers(user);
       setLoading(false);
     });
     return () => unsubscribe();

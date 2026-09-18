@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     // 4. Send Email via Resend
     const { data, error } = await resend.emails.send({
-      from: 'Pactical Love Astrology <contact@practicalloveastrology.com>', //contact@practicalloveastrology.com
+      from: 'Practical Love Astrology <contact@practicalloveastrology.com>',
       to: [contactEmail],
       replyTo: email,
       subject: `New Message from ${name}`,
