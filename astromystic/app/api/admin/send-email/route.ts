@@ -47,7 +47,11 @@ export async function POST(req: NextRequest) {
     await resend.emails.send({
       from: 'Practical Love Astrology <gulnara@practicalloveastrology.com>',
       to: [targetEmail],
-      replyTo: 'grobertovna127@gmail.com', // Replies go to your Gmail!
+      replyTo:
+        process.env.ADMIN_REPLY_TO_EMAIL ||
+        (process.env.ADMIN_EMAILS
+          ? process.env.ADMIN_EMAILS.split(',')[0].trim()
+          : 'contact@practicalloveastrology.com'),
       subject: subject,
       html: `
         <div style="font-family: sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
